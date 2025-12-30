@@ -1,0 +1,1521 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>3D Parcel Viewer — Buildings / Floors / Parcels</title>
+
+  <!-- Calcite + ArcGIS ESM -->
+  <script type="module" src="https://js.arcgis.com/calcite-components/3.3.3/calcite.esm.js"></script>
+  <link rel="stylesheet" href="https://js.arcgis.com/calcite-components/3.3.3/calcite.css" />
+  <script src="https://js.arcgis.com/4.34/"></script>
+  <script type="module" src="https://js.arcgis.com/4.34/map-components/"></script>
+
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: #1a2b55;
+      font-family: "Segoe UI", sans-serif;
+      color: #ecf0f1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    :root {
+      --accent-color: #1c5cff;
+      --select-button-color: #1c5cffcc;
+    }
+
+    header {
+      background: #0a1e3a; 
+      color: #fff;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 10px;
+      font-weight: 600;
+      z-index: 2;
+      border-bottom: 3px solid var(--accent-color);
+    }
+
+    header img {
+      height: 32px;
+    }
+
+    header h2 {
+      margin: 0;
+      font-size: 1.4em;
+    }
+
+    arcgis-scene {
+      height: calc(100vh - 60px);
+      width: 100%;
+    }
+
+    .column-heading {
+      display: flex;
+      align-items: last baseline;
+      gap: 6px;
+      border-bottom: 1px solid var(--accent-color);
+      line-height: 0;
+    }
+    .column-heading-icon {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+    }
+    .column-heading-text {
+      margin: 0;
+      font-size: 14px;
+      color: #fff;
+    }
+
+    #preloader {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: #0a1e3a;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4em;
+      z-index: 2000;
+    }
+
+    #panel {
+      position: absolute;
+      left: 10px;
+      display: flex;
+      gap: 10px;
+      z-index: 1000;
+    }
+
+    #buildingListColumn {
+      transform: translateX(0);
+      opacity: 1;
+    }
+
+    #buildingList, #floorList  {
+      max-height: 100vh; 
+      overflow-y: auto;
+      overflow-x: clip;
+      margin-top: 8px;
+    }
+
+    #parcelList {
+      overflow-y: auto;
+      max-height: 100vh; 
+      overflow-x: clip;
+      margin-top: 8px;
+    }
+
+    .building-search {
+      width: 92%;
+      padding: 6px 8px;
+      margin-bottom: 8px;
+      border: 1px solid #2c3e50;
+      border-radius: 4px;
+      font-size: 13px;
+      background: #10294a;
+      color: #ecf0f1;
+    }
+
+    .building-list-item,
+    .floor-list-item,
+    .parcel-list-item {
+      display: block;
+      width: 100%;
+      background-color: #34495e;
+      margin: 7px 0;
+      padding: 2px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      color: #ecf0f1;
+      box-sizing: border-box;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      position: relative;
+    }
+
+    .building-list-item:hover,
+    .floor-list-item:hover,
+    .parcel-list-item:hover {
+      border-color: #1c5cffcc;
+      box-shadow: 0 0 10px #1c5cffaa;;
+      font-weight: bold;
+      background-color: #1a2b55;
+      border: 1px solid var(--select-button-color);
+    }
+
+    .selected {
+      background: #1c5cff22;
+      border-color: #1c5cffcc;
+      box-shadow: 0 0 10px #1c5cffaa;
+      font-weight: bold;
+      border: 1px solid var(--select-button-color);
+    }
+
+    #selectedParcelList {
+      width: 320px;
+        background-color: #1a2b55;
+        color: white;
+        border-radius: 8px;
+        padding: 10px;
+        box-shadow: 0 0 7px 0.5px var(--select-button-color);
+        font-size: 13px;
+        position: absolute;
+        right: 20px;
+        display: none;
+        gap: 10px;
+        bottom: 60px;
+    }
+
+    .selected-parcel-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 0 6px 2px var(--select-button-color);
+      font-weight: bold;
+      border: 1px solid var(--accent-color);
+      padding: 6px 8px;
+      margin-bottom: 6px;
+      border-radius: 5px;
+    }
+
+    .remove-button {
+      background-color: #b40000;
+      border: none;
+      padding: 3px 6px;
+      border-radius: 3px;
+      color: white;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    #launchSurveyButton {
+      background-color: var(--accent-color);
+      border: none;
+      padding: 6px 10px;
+      margin-top: 10px;
+      border-radius: 4px;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+      width: 100%;
+    }
+
+    arcgis-layer-list {
+      margin-top: 56px;
+    }
+
+    footer {
+      height: 28px;
+      background-color: #0a1e3a;
+      color: #eee;
+      text-align: center;
+      line-height: 28px;
+      font-size: 12px;
+      border-top: 3px solid var(--accent-color);
+      z-index: 2;
+    }
+
+    arcgis-search {
+      right: 20px;
+      position:absolute;
+    }
+
+    #floorListColumn, #parcelListColumn {
+      display: none;
+      align-self: flex-end;
+    }
+
+    #ui-container {
+    display: flex;
+    height: calc(100vh - 60px); /* minus header height */
+    width: 100%;
+    overflow: hidden;
+    }
+
+    #floorPanel {
+    max-height: 100vh;
+    min-height: 20vh;
+    overflow-y: auto;
+    flex-shrink: 1;
+    flex-grow: 0;
+    display: none;
+    }
+
+    /* Left sidebar (buildings + floors stacked) */
+    #left-sidebar {
+    width: 260px;
+    background: #0a1e3a;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    gap: 12px;
+    border-right: 3px solid #122f57;
+    overflow: hidden;
+    }
+
+    #buildingPanel {
+    flex-shrink: 0; /* do not shrink */
+    }
+
+    /* Parcels column */
+    #parcel-sidebar {
+    width: 260px;
+    background: #0a1e3a;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    border-right: 3px solid #122f57;
+    }
+
+    #parcelPanel{
+    max-height: 50vh;
+    }
+
+    /* All panels */
+    .panel {
+    background: #10294a;
+    padding: 10px;
+    border-radius: 6px;
+    box-shadow: 0 0 4px rgba(0,0,0,0.4);
+    height: auto;
+    }
+
+    /* Headings */
+    .panel h3 {
+    margin: 0 0 8px 0;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #2f6df2;
+    font-size: 15px;
+    }
+
+    /* Search input */
+    #buildingSearch,
+    #parcelSearch {
+    width: 90%;
+    padding: 6px 8px;
+    margin-bottom: 8px;
+    border: 1px solid #284977;
+    border-radius: 4px;
+    background: #0e203a;
+    color: white;
+    }
+
+    arcgis-scene {
+    flex: 1;
+    height: 100%;
+    }
+
+    .header-icon-btn {
+        background: #0e203a;
+        border: 1px solid #1c5cff55;
+        color: white;
+        height: 38px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        margin-left: 12px;
+        transition: 0.15s ease;
+        box-shadow: 0 0 4px #00000066;
+    }
+
+    .header-icon-btn:hover {
+        background: #1c5cff22;
+        border-color: #1c5cffcc;
+        box-shadow: 0 0 10px #1c5cffaa;
+    }
+
+    .header-icon-btn:active {
+        transform: scale(0.92);
+    }
+
+  </style>
+</head>
+
+<body>
+	<div id="preloader">Loading… Please wait</div>
+	<!-- About / Info Dialog -->
+	<calcite-dialog id="aboutDialog"
+				 modal open
+				 heading="About the Jackson County 3D Parcel Viewer">
+		<!-- Little help icon in the header -->
+		<calcite-action id="aboutDialogHelpAction"
+					 text="What is this?"
+					 icon="question"
+					 slot="header-actions-end">
+		</calcite-action>
+
+		<calcite-tooltip reference-element="aboutDialogHelpAction"
+					  overlay-positioning="fixed">
+			Learn what this experimental 3D Parcel Viewer is doing.
+		</calcite-tooltip>
+
+		<div slot="content-top">
+			This 3D Parcel Viewer is an experimental research project by the
+			Jackson County GIS team.
+		</div>
+
+		<p>
+			In many parts of Jackson County, condominium and vertical subdivision
+			parcels are <strong>stacked on top of each other</strong> in the same
+			footprint. On a traditional 2D map this can look like “spaghetti” —
+			overlapping lines and polygons that are hard to interpret.
+		</p>
+
+		<p>
+			This application uses a <strong>3D scene</strong> to separate those
+			stacked parcels into floors and volumes so you can visually understand
+			how units relate to each other, to the building, and to the ground.
+			Because this is 3D, it relies heavily on your device’s
+			<strong>graphics hardware</strong> and network connection.
+		</p>
+
+		<p>
+			When you <strong>filter buildings, floors, or parcels</strong>, the
+			scene may take a few seconds to update while it loads and redraws
+			features. On some devices this can appear as brief pauses, delayed
+			labels, or lower-quality graphics while the scene catches up.
+		</p>
+
+		<p>
+			The Jackson County GIS Program is actively tuning this experience to
+			balance detail and performance. If something seems slow or doesn’t
+			draw as expected, it may be related to those 3D and hardware
+			limitations rather than the parcel data itself.
+		</p>
+
+		<p>
+			This viewer is provided as a <strong>
+				research and visualization
+				tool
+			</strong>. For official records or legal questions, please refer
+			to the Jackson County Assessment Department and recorded documents.
+		</p>
+
+		<calcite-button slot="footer-end" appearance="solid" width="full">
+			OK, got it
+		</calcite-button>
+	</calcite-dialog>
+
+	<!-- Button to open the dialog (e.g., in your header or functions area) -->
+	<calcite-button id="aboutDialogButton"
+				 icon-start="information"
+				 appearance="outline"
+				 scale="s">
+		About 3D Viewer
+	</calcite-button>
+
+	<header>
+		<img src="https://jcgis.jacksongov.org/images/largelogo.png" alt="Logo">
+		<h2>Parcel Viewer</h2>
+		<button id="functionsButton" class="header-icon-btn" title="Functions">
+			<calcite-icon icon="app-gear" scale="m"></calcite-icon>Functions
+		</button>
+
+		<arcgis-search id="search" include-default-sources-disabled></arcgis-search>
+	</header>
+	<div id="ui-container">
+		<!-- LEFT SIDEBAR -->
+		<div id="left-sidebar">
+
+			<!-- BUILDINGS -->
+			<div id="buildingPanel" class="panel panel-buildings">
+				<h3>Buildings</h3>
+				<input type="text" id="buildingSearch" placeholder="Search buildings…" />
+				<div id="buildingList"></div>
+			</div>
+
+			<!-- FLOORS -->
+			<div id="floorPanel" class="panel panel-floors" style="display:none;">
+				<h3>Floors</h3>
+				<div id="floorList"></div>
+			</div>
+			<div id="parcelPanel" class="panel" style="display:none;">
+				<h3>Parcels</h3>
+				<div id="parcelList"></div>
+			</div>
+
+
+		</div>
+
+		<!-- PARCELS -->
+		<div id="parcelPanel2" class="panel" style="display:none;">
+			<h3>Parcels</h3>
+			<input type="text" id="parcelSearch" placeholder="Search parcels…" />
+			<div id="parcelList"></div>
+		</div>
+		<arcgis-scene id="scene" item-id="f45587ca1ccb4d918269be01c1428698" environment="lighting: 'sunny'">
+			<!-- Top-right widgets -->
+		<arcgis-layer-list slot="top-right"></arcgis-layer-list>
+		</arcgis-scene>
+	</div>
+	<!-- Selected Parcels Panel -->
+	<div id="selectedParcelList" slot="bottom-right">
+		<h3>Selected Parcels</h3>
+		<div id="selectedParcelContent"></div>
+		<button id="launchSurveyButton">Launch Survey123</button>
+	</div>
+	<calcite-dialog id="functionsDialog" modal>
+		<h3 slot="heading">Tools & Functions</h3>
+		<div style="padding: 6px;">
+			<calcite-card>
+				<h4 slot="title">Coming Soon</h4>
+				<p slot="subtitle">Additional tools will appear here.</p>
+
+				<p>
+					This dialog will eventually hold functions like district filters,
+					labeling tools, visibility toggles, and more.
+				</p>
+
+				<calcite-chip color="blue" outline>
+					Future Feature
+				</calcite-chip>
+			</calcite-card>
+		</div>
+
+		<calcite-button slot="footer-end" appearance="outline">Close</calcite-button>
+	</calcite-dialog>
+	<script type="module">
+		// ---------------------------------------------------------------------------
+		// ArcGIS imports
+		// ---------------------------------------------------------------------------
+		const [
+			SearchSource,
+			Graphic,
+			projectOperator,
+			SceneFilter,
+			FeatureFilter,
+			Polygon,
+			geometryEngine
+		]=await $arcgis.import([
+			"@arcgis/core/widgets/Search/SearchSource.js",
+			"@arcgis/core/Graphic.js",
+			"@arcgis/core/geometry/operators/projectOperator.js",
+			"@arcgis/core/layers/support/SceneFilter.js",
+			"@arcgis/core/layers/support/FeatureFilter.js",
+			"@arcgis/core/geometry/Polygon.js",
+			"@arcgis/core/geometry/geometryEngine.js"
+		]);
+
+		// ---------------------------------------------------------------------------
+		// View / Map
+		// ---------------------------------------------------------------------------
+		const sceneEl=document.getElementById("scene");
+		await sceneEl.viewOnReady();
+		const view=sceneEl.view;
+		const map=view.map;
+		const DEBUG=true;  // flip to false when you’re done tracing
+		let currentBuildingName=null; // track which building is “active”
+
+		// ---------------------------------------------------------------------------
+		// Config: layer titles + buffer
+		// ---------------------------------------------------------------------------
+		const PARCEL_LAYER_TITLE="Parcel Condominiums";
+		const FLOOR_LAYER_TITLE="Parcel Condominiums Floors";
+		const BUILDING_FOOTPRINT_LAYER_TITLE="Parcel Condominiums Building";
+		const ESRI_3D_BUILDINGS_TITLE="Esri 3D Buildings";  // must match Layer List title
+		const ESRI_3D_BUFFER_FACTOR=0.3;                    // how much to expand extent
+		const titleLayer=map.allLayers.find(l => l.title==="Jackson County 3D Title");
+
+		let titleFaded=false;
+
+		// About dialog wiring
+		const aboutDialog=document.getElementById("aboutDialog");
+		const aboutDialogButton=document.getElementById("aboutDialogButton");
+
+		// Open from header/button
+		aboutDialogButton?.addEventListener("click",() =>
+		{
+			aboutDialog.open=true;
+		});
+
+		// Close on footer button click
+		aboutDialog
+			?.querySelector('calcite-button[slot="footer-end"]')
+			?.addEventListener("click",() =>
+			{
+				aboutDialog.open=false;
+			});
+
+
+		function fadeOutTitleLayer()
+		{
+			if(!titleLayer||titleFaded) return;
+			titleFaded=true;
+
+			const duration=1200; // ms
+			const startOpacity=titleLayer.opacity??1;
+			let startTime=null;
+
+			function step(timestamp)
+			{
+				if(!startTime) startTime=timestamp;
+				const progress=Math.min((timestamp-startTime)/duration,1);
+
+				// easeOutQuad
+				const eased=1-Math.pow(1-progress,2);
+
+				titleLayer.opacity=startOpacity*(1-eased);
+
+				if(progress<1)
+				{
+					requestAnimationFrame(step);
+				} else
+				{
+					titleLayer.visible=false;
+					titleLayer.opacity=0;
+				}
+			}
+
+			requestAnimationFrame(step);
+		}
+
+
+
+		function getLayerByTitle(title,required=false)
+		{
+			const layer=map.allLayers.find(l => l.title===title);
+			if(!layer&&required)
+			{
+				alert(`Required layer not found: ${title}`);
+				throw new Error(`Layer not found: ${title}`);
+			}
+			return layer||null;
+		}
+
+		// Core layers
+		const parcelLayer=getLayerByTitle(PARCEL_LAYER_TITLE,true);
+		await parcelLayer.load();
+		const parcelLayerView=await view.whenLayerView(parcelLayer);
+
+		const floorLayer=getLayerByTitle(FLOOR_LAYER_TITLE);
+		const floorLayerView=floorLayer? await view.whenLayerView(floorLayer):null;
+		const buildingFootprintLayer=getLayerByTitle(BUILDING_FOOTPRINT_LAYER_TITLE);
+		const esri3dBuildingsLayer=getLayerByTitle(ESRI_3D_BUILDINGS_TITLE);
+
+		// ---------------------------------------------------------------------------
+		// DOM references
+		// ---------------------------------------------------------------------------
+		const functionsButton=document.getElementById("functionsButton");
+		const functionsDialog=document.getElementById("functionsDialog");
+
+		const buildingListEl=document.getElementById("buildingList");
+		const floorListEl=document.getElementById("floorList");
+		const parcelListEl=document.getElementById("parcelList");
+		const parcelSearchEl=document.getElementById("parcelSearch");
+
+		const buildingSearchEl=document.getElementById("buildingSearch");
+		const selectedParcelContentEl=document.getElementById("selectedParcelContent");
+		const launchBtn=document.getElementById("launchSurveyButton");
+
+		// ---------------------------------------------------------------------------
+		// State
+		// ---------------------------------------------------------------------------
+		const parcelListSelectedOIDs=new Set();
+		const highlightedParcels=new Map();
+		const selectedParcels=[];
+
+		let currentBuildingExtent=null;
+		let allFeaturesForBuilding=[];
+
+		// ---------------------------------------------------------------------------
+		// Utility helpers
+		// ---------------------------------------------------------------------------
+		function nextFrame()
+		{
+			return new Promise(resolve => requestAnimationFrame(resolve));
+		}
+
+		function clearSelection(container)
+		{
+			if(!container) return;
+			container.querySelectorAll(".selected").forEach(el => el.classList.remove("selected"));
+		}
+
+		function clearSelectedParcels()
+		{
+			selectedParcels.length=0;
+			selectedParcelContentEl.innerHTML="";
+		}
+
+		function showSection(sectionId)
+		{
+			const section=document.getElementById(sectionId);
+			if(section)
+			{
+				section.style.transform="translateX(0px)";
+				section.style.opacity="1";
+			}
+		}
+
+		function updateSelectedPanel()
+		{
+			selectedParcelContentEl.innerHTML="";
+			selectedParcels.forEach(f =>
+			{
+				const name=f.attributes.Name;
+				const div=document.createElement("div");
+				div.className="selected-parcel-item";
+				div.innerHTML=`<span>${name}</span><button class="remove-button">✖</button>`;
+				div.querySelector(".remove-button").onclick=() =>
+				{
+					const oid=f.attributes.OBJECTID;
+					const idx=selectedParcels.findIndex(x => x.attributes.OBJECTID===oid);
+					if(idx>=0) selectedParcels.splice(idx,1);
+					updateSelectedPanel();
+				};
+				selectedParcelContentEl.appendChild(div);
+			});
+		}
+
+		// ---------------------------------------------------------------------------
+		// Toggle parcel selection (scene + side panel)
+		// ---------------------------------------------------------------------------
+		async function toggleParcelSelection(feature)
+		{
+			const oid=feature.attributes?.OBJECTID;
+			if(!oid) return;
+
+			const alreadySelected=selectedParcels.some(f => f.attributes.OBJECTID===oid);
+			document.getElementById("selectedParcelList").style.display="block";
+
+			if(alreadySelected)
+			{
+				// 🔻 Deselect
+				selectedParcels.splice(
+					selectedParcels.findIndex(f => f.attributes.OBJECTID===oid),
+					1
+				);
+
+				const handle=highlightedParcels.get(oid);
+				if(handle)
+				{
+					handle.remove();
+					highlightedParcels.delete(oid);
+				}
+
+				parcelListSelectedOIDs.delete(oid);
+
+				const parcelDiv=Array.from(parcelListEl.querySelectorAll(".parcel-list-item"))
+					.find(d => d.textContent===feature.attributes.Name);
+				if(parcelDiv) parcelDiv.classList.remove("selected");
+			} else
+			{
+				// ✅ Select
+				selectedParcels.push(feature);
+
+				const handle=floorLayerView.highlight([oid]);
+				highlightedParcels.set(oid,handle);
+
+				// If it didn’t originate from the parcel list we just log
+				if(!parcelListSelectedOIDs.has(oid))
+				{
+					console.log(`Parcel ${oid} selected (non-list origin).`);
+				}
+			}
+
+			updateSelectedPanel();
+		}
+
+		// ---------------------------------------------------------------------------
+		// Building list (divs)
+		// ---------------------------------------------------------------------------
+		async function populateBuildingList()
+		{
+			const res=await parcelLayer.queryFeatures({
+				where: "CartogNote IS NOT NULL",
+				outFields: ["CartogNote"],
+				returnDistinctValues: true
+			});
+
+			const buildings=res.features
+				.map(f => f.attributes.CartogNote)
+				.filter(b => b)
+				.sort();
+
+			buildingListEl.innerHTML="";
+
+			buildings.forEach(b =>
+			{
+				const button=document.createElement("div");
+				button.className="building-list-item";
+				button.textContent=b;
+				button.onclick=() => handleBuildingSelection(b,button);
+				buildingListEl.appendChild(button);
+			});
+
+			// Building search filter
+			buildingSearchEl.addEventListener("input",e =>
+			{
+				const filter=e.target.value.toLowerCase();
+				Array.from(buildingListEl.children).forEach(div =>
+				{
+					const match=div.textContent.toLowerCase().includes(filter);
+					div.style.display=match? "":"none";
+				});
+			});
+		}
+
+		// ---------------------------------------------------------------------------
+		// Floors for a building → calcite chips
+		// ---------------------------------------------------------------------------
+		async function renderFloorsForBuilding(features)
+		{
+			await nextFrame();
+			floorListEl.innerHTML="";
+
+			const floors=[...new Set(features.map(f => f.attributes.FloorNameDesignator))]
+				.sort((a,b) => Number(a)-Number(b));
+
+			const group=document.createElement("calcite-chip-group");
+			group.selectionMode="multiple";
+			group.label="Floors";
+			floorListEl.appendChild(group);
+
+			floors.forEach(fl =>
+			{
+				const chip=document.createElement("calcite-chip");
+				chip.textContent=fl;
+				chip.dataset.floor=fl;
+
+				chip.addEventListener("click",() =>
+				{
+					chip.classList.toggle("selected");
+					handleFloorSelection(fl,chip);
+				});
+
+				group.appendChild(chip);
+			});
+
+			document.getElementById("floorPanel").style.display="block";
+			await new Promise(resolve => requestAnimationFrame(resolve));
+		}
+
+		// ---------------------------------------------------------------------------
+		// Parcels list for floor(s)
+		// ---------------------------------------------------------------------------
+		async function renderParcelsForFloor(floorNum)
+		{
+			// NOTE: now parcels are built from handleFloorSelection using ALL selected floors,
+			// so this function is currently unused; kept for compatibility if needed later.
+			parcelListEl.innerHTML="";
+			const parcels=allFeaturesForBuilding.filter(
+				f => f.attributes.FloorNameDesignator==floorNum
+			);
+
+			parcelSearchEl.style.display=parcels.length>20? "block":"none";
+			parcelSearchEl.value="";
+
+			parcelSearchEl.oninput=() =>
+			{
+				const filter=parcelSearchEl.value.toLowerCase();
+				Array.from(parcelListEl.children).forEach(child =>
+				{
+					child.style.display=child.textContent.toLowerCase().includes(filter)? "":"none";
+				});
+			};
+
+			parcels.forEach(p =>
+			{
+				const divP=document.createElement("div");
+				divP.className="parcel-list-item";
+				divP.textContent=p.attributes.Name;
+				divP.dataset.name=p.attributes.Name;
+				divP.onclick=() =>
+				{
+					view.graphics.removeAll();
+					view.graphics.add(
+						new Graphic({
+							geometry: p.geometry,
+							symbol: {
+								type: "simple-fill",
+								color: [0,255,255,0.4],
+								outline: { color: [0,255,255],width: 2 }
+							}
+						})
+					);
+					view.goTo(p.geometry.extent.expand(2));
+					toggleParcelSelection(p);
+				};
+				parcelListEl.appendChild(divP);
+			});
+
+			await new Promise(resolve => requestAnimationFrame(resolve));
+		}
+
+		// ---------------------------------------------------------------------------
+		// Building filter: ESRI 3D Buildings + condo layers (buffered extent)
+		// ---------------------------------------------------------------------------
+		async function applyBuildingFilter(extent,cartogNote)
+		{
+			console.log("🏗 Applying SceneFilter + FeatureFilters using EXTENT:",extent,"for",cartogNote);
+
+			// 🧹 Remove any old debug geometries first
+			view.graphics.removeMany(view.graphics.filter(g => g.attributes?.debugType?.startsWith("filter-")));
+
+			// 1️⃣ Project extent to the view’s SR
+			const projectedExtent=await projectOperator.execute(extent,view.spatialReference);
+
+			// Build extent polygon (Parcel Condominiums envelope)
+			const extentPoly=new Polygon({
+				rings: [
+					[projectedExtent.xmin,projectedExtent.ymin],
+					[projectedExtent.xmax,projectedExtent.ymin],
+					[projectedExtent.xmax,projectedExtent.ymax],
+					[projectedExtent.xmin,projectedExtent.ymax],
+					[projectedExtent.xmin,projectedExtent.ymin]
+				],
+				spatialReference: view.spatialReference
+			});
+
+			// 🟦 Draw the base extent polygon
+			view.graphics.add(new Graphic({
+				geometry: extentPoly,
+				symbol: {
+					type: "simple-fill",
+					color: [0,255,255,0.05],
+					outline: { color: [0,255,255,0.8],width: 2 }
+				},
+				attributes: { debugType: "filter-extent" }
+			}));
+
+			// 2️⃣ Get the actual building footprint (spatially contains one parcel)
+			const parcelSample=await parcelLayer.queryFeatures({
+				where: `CartogNote = '${cartogNote.replace(/'/g,"''")}'`,
+				returnGeometry: true,
+				outFields: ["*"],
+				num: 1
+			});
+
+			let buildingGeom=null;
+			if(parcelSample.features.length)
+			{
+				const sampleGeom=parcelSample.features[0].geometry;
+
+				const buildingResult=await buildingFootprintLayer.queryFeatures({
+					geometry: sampleGeom,
+					spatialRelationship: "contains",
+					returnGeometry: true,
+					outFields: ["*"]
+				});
+
+				if(buildingResult.features.length)
+				{
+					buildingGeom=await projectOperator.execute(
+						buildingResult.features[0].geometry,
+						view.spatialReference
+					);
+
+					// 🟩 Draw building footprint area
+					view.graphics.add(new Graphic({
+						geometry: buildingGeom,
+						symbol: {
+							type: "simple-fill",
+							color: [0,255,0,0.08],
+							outline: { color: [0,255,0,1],width: 2 }
+						},
+						attributes: { debugType: "filter-building" }
+					}));
+				} else
+				{
+					console.warn("⚠ No building footprint found for:",cartogNote);
+				}
+			}
+
+			// 3️⃣ Expanded extent for ESRI 3D disjoint filtering
+			const expandedExtent=extent.expand(1.5);
+			const expandedProj=await projectOperator.execute(expandedExtent,view.spatialReference);
+
+			const expandedPoly=new Polygon({
+				rings: [
+					[expandedProj.xmin,expandedProj.ymin],
+					[expandedProj.xmax,expandedProj.ymin],
+					[expandedProj.xmax,expandedProj.ymax],
+					[expandedProj.xmin,expandedProj.ymax],
+					[expandedProj.xmin,expandedProj.ymin]
+				],
+				spatialReference: view.spatialReference
+			});
+
+			// 🟥 Draw expanded ESRI 3D filter area
+			view.graphics.add(new Graphic({
+				geometry: expandedPoly,
+				symbol: {
+					type: "simple-fill",
+					color: [255,0,0,0.05],
+					outline: { color: [255,0,0,0.8],width: 2 }
+				},
+				attributes: { debugType: "filter-esri3d" }
+			}));
+
+			// 4️⃣ Apply filters
+			// -- ESRI 3D Buildings (disjoint: hide surroundings)
+			if(esri3dBuildingsLayer)
+			{
+				esri3dBuildingsLayer.filter=new SceneFilter({
+					geometries: [expandedPoly],
+					spatialRelationship: "disjoint"
+				});
+			}
+
+			// -- Feature filters for building/floor/parcel
+			const filterGeom=buildingGeom||extentPoly;
+			const featureLayers=[buildingFootprintLayer,floorLayer,parcelLayer].filter(Boolean);
+
+			for(const layer of featureLayers)
+			{
+				const lv=await view.whenLayerView(layer);
+
+				// Apply CartogNote only if that field exists
+				const hasCartog=layer.fields.some(f => f.name==="CartogNote");
+				const whereClause=hasCartog
+					? `CartogNote = '${cartogNote.replace(/'/g,"''")}'`
+					:"1=1";
+
+				lv.filter=new FeatureFilter({
+					geometry: filterGeom,
+					spatialRelationship: "contains",
+					where: whereClause
+				});
+			}
+
+			console.log("🏁 Filters applied visually (cyan=extent, green=footprint, red=ESRI3D buffer)");
+		}
+
+
+
+		// ---------------------------------------------------------------------------
+		// Floor filter: restrict to selected floors within current building extent
+		// ---------------------------------------------------------------------------
+		async function applyFloorFilter(buildingExtent,floorNums)
+		{
+			console.log("🏢➡️🏢 Applying Floor Filter:",floorNums);
+
+			if(!Array.isArray(floorNums))
+			{
+				floorNums=[floorNums];
+			}
+
+			const poly=new Polygon({
+				rings: [
+					[buildingExtent.xmin,buildingExtent.ymin],
+					[buildingExtent.xmax,buildingExtent.ymin],
+					[buildingExtent.xmax,buildingExtent.ymax],
+					[buildingExtent.xmin,buildingExtent.ymax],
+					[buildingExtent.xmin,buildingExtent.ymin]
+				],
+				spatialReference: buildingExtent.spatialReference
+			});
+
+			const projected=await projectOperator.execute(poly,{ wkid: 3857 });
+
+			// If nothing selected, clear filters but keep building envelope
+			if(!floorNums.length)
+			{
+				console.log("⚪ No floors selected; keeping only building-level filter.");
+				// Optionally: you could clear floor/parcel where clauses here
+			}
+
+			const whereClause=floorNums.length
+				? floorNums.map(fn => `FloorNameDesignator = '${fn}'`).join(" OR ")
+				:"1=1"; // show all floors within building if nothing selected
+
+			const whereClause2=floorNums.length
+				? floorNums.map(fn => `FloorNameDesignator <> '${fn}'`).join(" AND ")
+				:"1=1"; // show all floors within building if nothing selected
+
+			// Floors layer filter
+			if(floorLayer)
+			{
+				const lvFloors=await view.whenLayerView(floorLayer);
+				lvFloors.filter=new FeatureFilter({
+					geometry: projected,
+					where: whereClause
+				});
+				console.log("✔ Floor filter applied to Floors layer");
+			}
+
+			// Parcels layer filter (only parcels on those floors)
+			if(parcelLayer)
+			{
+				const lvParcels=await view.whenLayerView(parcelLayer);
+				lvParcels.filter=new FeatureFilter({
+					geometry: projected,
+					where: whereClause2
+				});
+				console.log("✔ Floor filter applied to Parcel layer");
+			}
+
+			console.log("🏁 Floor filter finished.");
+		}
+
+		// ---------------------------------------------------------------------------
+		// Building selection
+		// ---------------------------------------------------------------------------
+		async function handleBuildingSelection(cartogNote,div)
+		{
+			fadeOutTitleLayer();
+
+			// Track which building we clicked (handy for other logic if needed)
+			currentBuildingName=cartogNote;
+
+			const allBuildingDivs=Array.from(buildingListEl.children);
+			const visibleCount=allBuildingDivs.filter(el => el.style.display!=="none").length;
+			const isAlreadyOnlyVisible=visibleCount===1&&div.style.display!=="none";
+			const isAlreadySelected=div.classList.contains("selected");
+
+			// 🔁 Toggle back to full list if user clicks the only visible + selected building
+			if(isAlreadyOnlyVisible&&isAlreadySelected)
+			{
+				console.log("🔄 Expanding building list back to full list");
+
+				// Show all buildings again
+				allBuildingDivs.forEach(el => (el.style.display=""));
+
+				// Reset UI
+				clearSelection(buildingListEl);
+				floorListEl.innerHTML="";
+				parcelListEl.innerHTML="";
+
+				document.getElementById("floorPanel").style.display="none";
+				document.getElementById("parcelPanel").style.display="none";
+
+				// Reset visibility
+				if(buildingFootprintLayer) buildingFootprintLayer.visible=true;
+				if(floorLayer) floorLayer.visible=false;
+				if(parcelLayer) parcelLayer.visible=false;
+
+				return; // ⛔ stop here
+			}
+
+			console.group("🏢 handleBuildingSelection:",cartogNote);
+
+			// Collapse list to just this building
+			allBuildingDivs.forEach(el =>
+			{
+				el.style.display=el===div? "":"none";
+			});
+
+			// UI reset for this new selection
+			clearSelection(buildingListEl);
+			div.classList.add("selected");
+			div.scrollIntoView({ behavior: "smooth",block: "nearest" });
+
+			clearSelection(floorListEl);
+			clearSelectedParcels();
+			floorListEl.innerHTML="";
+			parcelListEl.innerHTML="";
+
+			// 🔍 Query parcels for that building
+			const where=`CartogNote = '${cartogNote.replace(/'/g,"''")}'`;
+
+			const res=await parcelLayer.queryFeatures({
+				where,
+				outFields: ["*"],
+				returnGeometry: true
+			});
+
+			// 🧪 DEBUG: see what CartogNotes actually came back
+			if(DEBUG)
+			{
+				const distinctCartogs=[...new Set(res.features.map(f => f.attributes.CartogNote))];
+
+				alert(
+					[
+						"BUILDING DEBUG",
+						"-----------------------------",
+						`Clicked CartogNote: ${cartogNote}`,
+						`WHERE clause: ${where}`,
+						`Features returned: ${res.features.length}`,
+						"",
+						"Distinct CartogNote values in result:",
+						distinctCartogs.length? distinctCartogs.join(", "):"(none)"
+					].join("\n")
+				);
+			}
+
+			allFeaturesForBuilding=res.features;
+			console.log("📦 Parcels found:",allFeaturesForBuilding.length);
+
+			// 🔭 Compute building extent
+			const extent=allFeaturesForBuilding.reduce((acc,f) =>
+			{
+				if(!f.geometry) return acc;
+				return acc? acc.union(f.geometry.extent):f.geometry.extent.clone();
+			},null);
+
+			if(extent)
+			{
+				console.log("🔍 Zooming to building extent…", extent);
+				const cameraExtent=extent;
+				await view.goTo({
+					target: cameraExtent,
+					tilt: 79,
+					position: { z: 5 }
+				});
+			}
+
+			// ✏️ Draw building outline
+			view.graphics.removeMany(
+				view.graphics.filter(g => g.attributes?.debugType==="building-outline")
+			);
+
+			if(extent)
+			{
+				view.graphics.add(
+					new Graphic({
+						geometry: extent,
+						symbol: {
+							type: "simple-fill",
+							color: [0,255,255,0.05],
+							outline: { color: [0,255,255,0.6],width: 2 }
+						},
+						attributes: { debugType: "building-outline" }
+					})
+				);
+			}
+
+			// 🧱 Build floors list for this building
+			await renderFloorsForBuilding(allFeaturesForBuilding);
+
+			// 🎯 Apply building-level filters (3D buildings + feature layers)
+			if(extent)
+			{
+				await applyBuildingFilter(extent,cartogNote);
+			}
+
+			// Show floors panel
+			document.getElementById("floorPanel").style.display="block";
+
+			// Visibilities when a building is selected:
+			if(buildingFootprintLayer) buildingFootprintLayer.visible=true;
+			if(floorLayer) floorLayer.visible=false;   // will turn on after floor selection
+			if(parcelLayer) parcelLayer.visible=false; // only after floors are chosen
+
+			currentBuildingExtent=extent;
+			console.groupEnd();
+		}
+
+
+		// ---------------------------------------------------------------------------
+		// Floor selection (multi-select via chips)
+		// ---------------------------------------------------------------------------
+		async function handleFloorSelection(floorNum,chipEl)
+		{
+			showSection("parcelListColumn");
+			document.getElementById("parcelPanel").style.display="block";
+
+			parcelListEl.innerHTML="";
+
+			const selectedFloorNums=Array.from(
+				floorListEl.querySelectorAll("calcite-chip.selected")
+			).map(chip => chip.dataset.floor);
+
+			console.log("🏢 Selected Floors:",selectedFloorNums);
+
+			if(!selectedFloorNums.length)
+			{
+				// No floors selected – still keep building filter but hide parcel list
+				if(currentBuildingExtent)
+				{
+					await applyFloorFilter(currentBuildingExtent,[]);
+				}
+				return;
+			}
+
+			// Build grouped parcel list
+			selectedFloorNums.forEach(fn =>
+			{
+				const headerDiv=document.createElement("div");
+				headerDiv.style.margin="8px 0 4px";
+				headerDiv.style.fontWeight="bold";
+				headerDiv.style.color="#fff";
+				headerDiv.textContent="Floor "+fn;
+				parcelListEl.appendChild(headerDiv);
+
+				const parcels=allFeaturesForBuilding.filter(
+					f => f.attributes.FloorNameDesignator==fn
+				);
+
+				parcels.forEach(p =>
+				{
+					const divP=document.createElement("div");
+					divP.className="parcel-list-item";
+					divP.textContent=p.attributes.Name;
+					divP.dataset.name=p.attributes.Name;
+
+					divP.onclick=async () =>
+					{
+						const oid=p.attributes.OBJECTID;
+						parcelListSelectedOIDs.add(oid);
+						divP.classList.add("selected");
+
+						const result=await parcelLayer.queryFeatures({
+							where: `OBJECTID = ${oid}`,
+							outFields: ["OBJECTID","Name","CartogNote","FloorNameDesignator"],
+							returnGeometry: true
+						});
+
+						const fullFeature=result.features?.[0];
+						if(!fullFeature?.geometry)
+						{
+							alert("❌ Failed to fetch parcel geometry");
+							return;
+						}
+
+						// 🔍 Zoom to the parcel before highlighting/selecting
+						await view.goTo({
+							target: fullFeature.geometry.extent.expand(2),
+							tilt: view.camera.tilt,        // keep current tilt
+							heading: view.camera.heading   // keep current heading
+						});
+
+						toggleParcelSelection(fullFeature);
+					};
+
+
+					parcelListEl.appendChild(divP);
+				});
+			});
+
+			// When floors are selected, emphasize floors + parcels, hide building footprint
+			if(buildingFootprintLayer) buildingFootprintLayer.visible=false;
+			if(floorLayer) floorLayer.visible=true;
+			if(parcelLayer) parcelLayer.visible=true;
+
+
+			// Apply floor filter to layers
+			if(currentBuildingExtent)
+			{
+				await applyFloorFilter(currentBuildingExtent,selectedFloorNums);
+			} else
+			{
+				console.warn("⚠ currentBuildingExtent is missing — cannot floor-filter");
+			}
+		}
+
+		// ---------------------------------------------------------------------------
+		// Jump from search or scene click → building/floor/parcel
+		// ---------------------------------------------------------------------------
+		async function selectBuildingFloorParcel(feature)
+		{
+			const cartogNote=feature.attributes.CartogNote;
+			const floorNum=feature.attributes.FloorNameDesignator;
+			const name=feature.attributes.Name;
+			console.debug("selectBuildingFloorParcel:",{ cartogNote,floorNum,name });
+
+			// Building
+			const buildingDiv=Array.from(buildingListEl.children).find(
+				d => d.textContent===cartogNote
+			);
+			if(buildingDiv)
+			{
+				clearSelection(buildingListEl);
+				buildingDiv.classList.add("selected");
+				buildingDiv.scrollIntoView({ behavior: "smooth",block: "nearest" });
+				await handleBuildingSelection(cartogNote,buildingDiv);
+			} else
+			{
+				console.warn("Building item not found:",cartogNote);
+			}
+
+			// Floors list already built by handleBuildingSelection
+			const floorChip=Array.from(
+				floorListEl.querySelectorAll("calcite-chip")
+			).find(chip => chip.dataset.floor==floorNum);
+
+			if(floorChip)
+			{
+				floorChip.classList.add("selected");
+				floorChip.scrollIntoView({ behavior: "smooth",block: "nearest" });
+				await handleFloorSelection(floorNum,floorChip);
+			} else
+			{
+				console.warn("Floor chip not found:",floorNum);
+			}
+
+			// Parcel in list
+			const parcelDiv=Array.from(parcelListEl.querySelectorAll(".parcel-list-item"))
+				.find(d => d.dataset.name===name);
+			if(parcelDiv)
+			{
+				clearSelection(parcelListEl);
+				parcelDiv.classList.add("selected");
+				parcelDiv.scrollIntoView({ behavior: "smooth",block: "nearest" });
+				toggleParcelSelection(feature);
+			} else
+			{
+				console.warn("Parcel item not found:",name);
+			}
+		}
+
+		// Used only if you call it explicitly
+		async function handleParcelSelection(feature)
+		{
+			await selectBuildingFloorParcel(feature);
+		}
+
+		// ---------------------------------------------------------------------------
+		// Scene click → follow building / floor / parcel
+		// ---------------------------------------------------------------------------
+		view.on("click",async event =>
+		{
+			fadeOutTitleLayer();
+			const hit=await view.hitTest(event);
+			const result=hit.results.find(r => r.graphic?.layer===parcelLayer);
+			if(!result) return;
+
+			const feature=result.graphic;
+			const oid=feature.attributes?.OBJECTID;
+			if(!oid) return;
+
+			const isSelected=selectedParcels.some(f => f.attributes.OBJECTID===oid);
+
+			if(isSelected&&parcelListSelectedOIDs.has(oid))
+			{
+				toggleParcelSelection(feature);
+				return;
+			} else if(isSelected)
+			{
+				// Deselect non-list selection
+				selectedParcels.splice(
+					selectedParcels.findIndex(f => f.attributes.OBJECTID===oid),
+					1
+				);
+
+				const handle=highlightedParcels.get(oid);
+				if(handle)
+				{
+					handle.remove();
+					highlightedParcels.delete(oid);
+				}
+
+				const parcelDiv=Array.from(parcelListEl.querySelectorAll(".parcel-list-item"))
+					.find(d => d.textContent===feature.attributes.Name);
+				if(parcelDiv) parcelDiv.classList.remove("selected");
+
+				updateSelectedPanel();
+				return;
+			}
+
+			// Normal selection → drive building/floor/parcel UI
+			await selectBuildingFloorParcel(feature);
+		});
+
+		// ---------------------------------------------------------------------------
+		// Functions button → dialog
+		// ---------------------------------------------------------------------------
+		functionsButton.addEventListener("click",() =>
+		{
+			functionsDialog.open=true;
+		});
+
+		// ---------------------------------------------------------------------------
+		// Launch Survey button
+		// ---------------------------------------------------------------------------
+		launchBtn.onclick=() =>
+		{
+			if(selectedParcels.length===0)
+			{
+				alert("Please select at least one parcel.");
+				return;
+			}
+			// TODO: replace with real Survey123 / union logic
+			alert("Selected parcels count: "+selectedParcels.length);
+		};
+
+		// ---------------------------------------------------------------------------
+		// Parcel search source
+		// ---------------------------------------------------------------------------
+		const searchEl=document.getElementById("search");
+
+		const parcelSearchSource=new SearchSource({
+			placeholder: "Search Parcel by Name",
+			getSuggestions: async params =>
+			{
+				const res=await parcelLayer.queryFeatures({
+					where: `UPPER(Name) LIKE UPPER('%${params.suggestTerm.replace(/'/g,"''")}%')`,
+					outFields: ["OBJECTID","Name"],
+					returnGeometry: false
+				});
+				return res.features.map(f => ({
+					key: f.attributes.OBJECTID,
+					text: f.attributes.Name,
+					sourceIndex: params.sourceIndex
+				}));
+			},
+			getResults: async params =>
+			{
+				const where=params.suggestResult?.key
+					? `OBJECTID = ${params.suggestResult.key}`
+					:`UPPER(Name) LIKE UPPER('%${params.searchTerm.replace(/'/g,"''")}%')`;
+
+				const res=await parcelLayer.queryFeatures({
+					where,
+					outFields: ["CartogNote","FloorNameDesignator","Name","OBJECTID"],
+					returnGeometry: true
+				});
+				return res.features.map(f => ({
+					name: f.attributes.Name,
+					cartogNote: f.attributes.CartogNote,
+					floor: f.attributes.FloorNameDesignator,
+					feature: f
+				}));
+			}
+		});
+
+		searchEl.sources=[parcelSearchSource];
+
+		searchEl.addEventListener("arcgisSearchComplete",async evt =>
+		{
+			fadeOutTitleLayer();
+			const result=evt.detail?.results?.[0]?.results?.[0];
+			if(!result) return;
+			const feature=result.feature;
+
+			view.graphics.removeAll();
+			view.graphics.add(
+				new Graphic({
+					geometry: feature.geometry,
+					symbol: {
+						type: "simple-fill",
+						color: [0,255,255,0.4],
+						outline: { color: [0,255,255],width: 2 }
+					}
+				})
+			);
+
+			await view.goTo({
+				target: feature.geometry.extent.expand(2),
+				tilt: 75,
+				position: { z: 5 }
+			});
+
+			await selectBuildingFloorParcel(feature);
+		});
+
+		// ---------------------------------------------------------------------------
+		// Init
+		// ---------------------------------------------------------------------------
+		await populateBuildingList();
+		document.getElementById("preloader").style.display="none";
+	</script>
+	<footer id="footer">
+		&copy; 2025 - Jackson County Missouri GIS <img b-z9jlwdq2gm="" src="https://jcgis.jacksongov.org/images/Icons/globe-glow.svg" alt="Globe Icon" style="width:20px; height:20px; vertical-align: text-bottom; margin-left:1px; filter: invert(70%);">
+	</footer>
+</body>
+</html>
