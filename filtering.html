@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+
+    <title>Internal Parcel Viewer</title>
+
+    <!-- Calcite + ArcGIS ESM -->
+    <script type="module" src="https://js.arcgis.com/calcite-components/3.3.3/calcite.esm.js"></script>
+    <link rel="stylesheet" href="https://js.arcgis.com/calcite-components/3.3.3/calcite.css" />
+    <script src="https://js.arcgis.com/4.34/"></script>
+    <script type="module" src="https://js.arcgis.com/4.34/map-components/"></script>
+    <link rel="stylesheet" href="css/main.css" />
+</head>
+
+  <body class="calcite-mode-light">
+	<header>
+		<img src="https://jcgis.jacksongov.org/images/largelogo.png" alt="Logo">
+		<h2>Parcel Viewer</h2>
+		<button id="functionsButton" class="header-icon-btn" title="Functions">
+			<calcite-icon icon="app-gear" scale="m"></calcite-icon>Functions
+		</button>
+
+		<arcgis-search id="search" include-default-sources-disabled></arcgis-search>
+	</header>
+	<div id="ui-container">
+		<!-- LEFT SIDEBAR -->
+		<div id="left-sidebar">
+
+			<!-- SPECIAL TAX DISTRICTS -->
+            <div>
+                <button class="district-list-item" data-layer="CID">CID</button>
+                <button class="district-list-item" data-layer="TIF_Project">TIF Project</button>
+                <button class="district-list-item" data-layer="TIF_Plan_District">TIF District</button>
+                <button class="district-list-item" data-layer="TDD">TDD</button>
+            </div>
+            <div id="district-names"></div>
+			<!-- QUERY -->
+            <div id="districtValueSection" style="display:none;">
+                <label for="districtValueSelect">District</label>
+                <select id="districtValueSelect">
+                <option value="__ALL__">All districts</option>
+                </select>
+
+                <button id="runDistrictQuery">Run Query</button>
+            </div>
+
+		</div>
+        <!-- MAP -->
+        <arcgis-map item-id="715b4ef93362498e97db7393dc2b7d17">
+        <arcgis-zoom slot="top-left"></arcgis-zoom>
+        <arcgis-expand slot="top-left" group="top-left">
+            <arcgis-legend></arcgis-legend>
+        </arcgis-expand>
+        </arcgis-map>
+	</div>
+	<calcite-dialog id="functionsDialog" modal>
+		<h3 slot="heading">Tools & Functions</h3>
+		<div style="padding: 6px;">
+			<calcite-card>
+				<h4 slot="title">Coming Soon</h4>
+				<p slot="subtitle">Additional tools will appear here.</p>
+
+				<p>
+					This dialog will eventually hold functions like district filters,
+					labeling tools, visibility toggles, and more.
+				</p>
+
+				<calcite-chip color="blue" outline>
+					Future Feature
+				</calcite-chip>
+			</calcite-card>
+		</div>
+
+		<calcite-button slot="footer-end" appearance="outline">Close</calcite-button>
+	</calcite-dialog>
+
+    <script type="module">
+    const [
+        SearchSource,
+        Graphic,
+        projectOperator,
+        FeatureFilter,
+        Polygon,
+        geometryEngine
+    ] = await $arcgis.import([
+        "@arcgis/core/widgets/Search/SearchSource.js",
+        "@arcgis/core/Graphic.js",
+        "@arcgis/core/geometry/operators/projectOperator.js",
+        "@arcgis/core/layers/support/FeatureFilter.js",
+        "@arcgis/core/geometry/Polygon.js",
+        "@arcgis/core/geometry/geometryEngine.js"
+    ]);
+
+    const arcgisMap = document.querySelector("arcgis-map");
+
+    // Wait for the webmap + view to be ready
+    await new Promise((resolve) => {
+        arcgisMap.addEventListener("arcgisViewReadyChange", resolve, { once: true });
+    });
+
+    const view = arcgisMap.view;
+    const webmap = view.map;
+
+    const resultsContainer = document.getElementById("districtResults");
+
+    // Generalized function to query any layer by its title
+    async function handleLayerClick(layerTitle) {
+        resultsContainer.innerHTML = "Loading…";
+        console.log(`Button clicked for layer: ${layerTitle}`);
+
+        // Find the feature layer with the given title
+        const layer = webmap.allLayers.find(
+        l => l.type === "feature" && l.title === layerTitle
+        );
+
+        if (!layer) {
+        console.error(`❌ Layer "${layerTitle}" not found in web map`);
+        resultsContainer.innerHTML = `<em>Layer "${layerTitle}" not found</em>`;
+        return;
+        }
+
+        // Make sure layer is fully loaded
+        await layer.load();
+        console.log(`Layer "${layerTitle}" loaded`);
+        console.log(
+        "Layer fields:",
+        layer.fields.map(f => `${f.name} (${f.type})`)
+        );
+
+        // Query for all Name values
+        const query = layer.createQuery();
+        query.where = "Name IS NOT NULL";
+        query.outFields = ["Name"];
+        query.orderByFields = ["Name"];
+
+        try {
+        const result = await layer.queryFeatures(query);
+        console.log("Query result:", result);
+        console.log("Returned feature count:", result.features.length);
+
+        resultsContainer.innerHTML = "";
+
+        if (!result.features.length) {
+            resultsContainer.innerHTML = "<em>No values found</em>";
+            return;
+        }
+
+        // Display each Name in the results container
+        result.features.forEach((feature, index) => {
+            const name = feature.attributes.Name;
+            console.log(`Feature ${index} Name:`, name);
+
+            const div = document.createElement("div");
+            div.textContent = name;
+            div.className = "district-item";
+
+            resultsContainer.appendChild(div);
+        });
+
+        } catch (err) {
+        console.error("❌ Error querying layer:", err);
+        resultsContainer.innerHTML = `<em>Error querying "${layerTitle}"</em>`;
+        }
+    }
+
+    // Attach the click handler to all buttons dynamically
+    const buttons = document.querySelectorAll(".district-list-item"); // use the class for all layer buttons
+
+    buttons.forEach(btn => {
+        btn.addEventListener("click", () => {
+        const layerTitle = btn.dataset.layer; // e.g., "CID", "TDD", "TIFproject"
+        handleLayerClick(layerTitle);
+        });
+    });
+
+    </script>
+
+
+  </body>
+</html>
