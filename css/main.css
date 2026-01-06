@@ -38,6 +38,31 @@ font-size: 1.4em;
 white-space: nowrap;
 }
 
+.header-icon-btn {
+    background: #0e203a;
+    border: 1px solid #1c5cff55;
+    color: white;
+    height: 38px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin-left: 12px;
+    transition: 0.15s ease;
+    box-shadow: 0 0 4px #00000066;
+}
+
+.header-icon-btn:hover {
+    background: #1c5cff22;
+    border-color: #1c5cffcc;
+    box-shadow: 0 0 10px #1c5cffaa;
+}
+
+.header-icon-btn:active {
+    transform: scale(0.92);
+}
+
 #ui-container {
 display: flex;
 height: calc(100vh - 60px);
@@ -67,6 +92,7 @@ arcgis-map {
 flex: 1;
 height: 100%;
 width: 100%;
+background-color: #fff;
 }
 
 arcgis-layer-list {

@@ -18,6 +18,9 @@
 			<img src="https://jcgis.jacksongov.org/images/largelogo.png" alt="Logo">
 				<h2>Map Viewer Template</h2>
 				<arcgis-search id="search" include-default-sources-disabled=""></arcgis-search>
+				<button id="functionsButton" class="header-icon-btn" title="Functions">
+				<calcite-icon icon="app-gear" scale="m"></calcite-icon>Functions
+		</button>
 			</header>
 
 	<div id="ui-container">
@@ -38,6 +41,26 @@
 		<arcgis-map id="map" item-id="715b4ef93362498e97db7393dc2b7d17">
 			<arcgis-layer-list slot="top-right"></arcgis-layer-list>
 		</arcgis-map>
+			<calcite-dialog id="functionsDialog" modal>
+		<h3 slot="heading">Tools & Functions</h3>
+		<div style="padding: 6px;">
+			<calcite-card>
+				<h4 slot="title">Coming Soon</h4>
+				<p slot="subtitle">Additional tools will appear here.</p>
+
+				<p>
+					This dialog will eventually hold functions like district filters,
+					labeling tools, visibility toggles, and more.
+				</p>
+
+				<calcite-chip color="blue" outline>
+					Future Feature
+				</calcite-chip>
+			</calcite-card>
+		</div>
+
+		<calcite-button slot="footer-end" appearance="outline">Close</calcite-button>
+	</calcite-dialog>
 	</div>
 
 		<footer>
@@ -59,6 +82,13 @@
 			await mapEl.viewOnReady();
 			const view = mapEl.view;
 			const map = view.map;
+			const functionsButton=document.getElementById("functionsButton");
+			const functionsDialog=document.getElementById("functionsDialog");
+
+			functionsButton.addEventListener("click",() =>{
+				functionsDialog.open=true;
+			});
+
 
 			// Wait until layers load
 			await view.when();
@@ -125,17 +155,6 @@
 			await view.goTo(feature.geometry.extent.expand(2));
 			});
 
-			//Custom select-all by tax district group
-			function addGroupSelectAllItem(groupEl, groupKey) {
-				const selectAllItem = document.createElement("calcite-combobox-item");
-
-				selectAllItem.value = `${groupKey}:__ALL__`;
-				selectAllItem.textLabel = "Select all";
-				selectAllItem.dataset.selectAll = "true";
-				selectAllItem.dataset.group = groupKey;
-
-				groupEl.appendChild(selectAllItem);
-			}
 			//Dynamically populate combobox groups w/ Name values
 			async function populateComboboxGroup({
 				layerTitle,
@@ -165,8 +184,6 @@
 				.sort((a, b) => a.localeCompare(b));
 
 				const groupEl = document.getElementById(groupId);
-
-				addGroupSelectAllItem(groupEl, valuePrefix);
 
 				values.forEach(value => {
 				const item = document.createElement("calcite-combobox-item");
@@ -203,55 +220,7 @@
 				fieldName: "Name",
 				groupId: "tifplan-names",
 				valuePrefix: "TIF_PLAN"
-			});
-
-			const combo = document.querySelector("calcite-combobox");
-
-			combo.addEventListener("calciteComboboxChange", () => {
-			const selectedItems = combo.selectedItems;
-
-			// Handle group select-all
-			const selectAllItem = selectedItems.find(
-				item => item.dataset.selectAll === "true"
-			);
-
-			if (selectAllItem) {
-				const groupKey = selectAllItem.dataset.group;
-
-				const groupItems = [...combo.querySelectorAll(
-				`calcite-combobox-item[value^="${groupKey}:"]`
-				)].filter(item => !item.dataset.selectAll);
-
-				const allSelected = groupItems.every(item => item.selected);
-
-				groupItems.forEach(item => {
-				item.selected = !allSelected;
-				});
-
-				// keep select-all in sync
-				selectAllItem.selected = !allSelected;
-				return;
-			}
-
-			// Sync select-all checkbox when individual items change
-			const selectAllItems = combo.querySelectorAll(
-				"calcite-combobox-item[data-select-all]"
-			);
-
-			selectAllItems.forEach(selectAll => {
-				const groupKey = selectAll.dataset.group;
-
-				const groupItems = [...combo.querySelectorAll(
-				`calcite-combobox-item[value^="${groupKey}:"]`
-				)].filter(item => !item.dataset.selectAll);
-
-				selectAll.selected =
-				groupItems.length > 0 &&
-				groupItems.every(item => item.selected);
-			});
-			});
-
-
+			});		
 		</script>
 	</body>
 </html>
