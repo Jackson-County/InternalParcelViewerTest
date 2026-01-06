@@ -26,21 +26,18 @@
 
 			<!-- SPECIAL TAX DISTRICTS -->
             <div>
-				<calcite-combobox placeholder="Select a field" select-all-enabled>
+				<calcite-combobox placeholder="Select a field" selection-display="single" select-all-enabled>
 					<calcite-combobox-item-group id="cid-names" label="CID"></calcite-combobox-item-group>
 					<calcite-combobox-item-group id="tdd-names" label="TDD"></calcite-combobox-item-group>
-					<calcite-combobox-item-group id="tifproj-names" label="TIF Project"></calcite-combobox-item-group>
+					<calcite-combobox-item-group id="tifproj-names" label="TIF Projects"></calcite-combobox-item-group>
 					<calcite-combobox-item-group id="tifplan-names" label="TIF Plan District"></calcite-combobox-item-group>
 				</calcite-combobox>
             </div>
 		</div>
         <!-- MAP -->
-        <arcgis-map item-id="715b4ef93362498e97db7393dc2b7d17">
-        <arcgis-zoom slot="top-left"></arcgis-zoom>
-        <arcgis-expand slot="top-left" group="top-left">
-            <arcgis-legend></arcgis-legend>
-        </arcgis-expand>
-        </arcgis-map>
+		<arcgis-map id="map" item-id="715b4ef93362498e97db7393dc2b7d17">
+			<arcgis-layer-list slot="top-right"></arcgis-layer-list>
+		</arcgis-map>
 	</div>
 
 		<footer>
@@ -127,6 +124,134 @@
 
 			await view.goTo(feature.geometry.extent.expand(2));
 			});
+
+			//Custom select-all by tax district group
+			function addGroupSelectAllItem(groupEl, groupKey) {
+				const selectAllItem = document.createElement("calcite-combobox-item");
+
+				selectAllItem.value = `${groupKey}:__ALL__`;
+				selectAllItem.textLabel = "Select all";
+				selectAllItem.dataset.selectAll = "true";
+				selectAllItem.dataset.group = groupKey;
+
+				groupEl.appendChild(selectAllItem);
+			}
+			//Dynamically populate combobox groups w/ Name values
+			async function populateComboboxGroup({
+				layerTitle,
+				fieldName,
+				groupId,
+				valuePrefix
+			}) {
+				const layer = map.allLayers.find(l => l.title === layerTitle);
+
+				if (!layer) {
+				console.warn(`Layer not found: ${layerTitle}`);
+				return;
+				}
+
+				await layer.load();
+
+				const query = layer.createQuery();
+				query.outFields = [fieldName];
+				query.returnDistinctValues = true;
+				query.where = "1=1";
+
+				const { features } = await layer.queryFeatures(query);
+
+				const values = features
+				.map(f => f.attributes[fieldName])
+				.filter(v => v != null)
+				.sort((a, b) => a.localeCompare(b));
+
+				const groupEl = document.getElementById(groupId);
+
+				addGroupSelectAllItem(groupEl, valuePrefix);
+
+				values.forEach(value => {
+				const item = document.createElement("calcite-combobox-item");
+				item.value = `${valuePrefix}:${value}`;
+				item.textLabel = value;
+				groupEl.appendChild(item);
+				});
+			}
+
+			// Populate combobox groups
+			await populateComboboxGroup({
+				layerTitle: "CID",
+				fieldName: "Name",
+				groupId: "cid-names",
+				valuePrefix: "CID"
+			});
+
+			await populateComboboxGroup({
+				layerTitle: "TDD",
+				fieldName: "Name",
+				groupId: "tdd-names",
+				valuePrefix: "TDD"
+			});
+
+			await populateComboboxGroup({
+				layerTitle: "TIF Projects",
+				fieldName: "Name",
+				groupId: "tifproj-names",
+				valuePrefix: "TIF_PROJECT"
+			});
+
+			await populateComboboxGroup({
+				layerTitle: "TIF Plan District",
+				fieldName: "Name",
+				groupId: "tifplan-names",
+				valuePrefix: "TIF_PLAN"
+			});
+
+			const combo = document.querySelector("calcite-combobox");
+
+			combo.addEventListener("calciteComboboxChange", () => {
+			const selectedItems = combo.selectedItems;
+
+			// Handle group select-all
+			const selectAllItem = selectedItems.find(
+				item => item.dataset.selectAll === "true"
+			);
+
+			if (selectAllItem) {
+				const groupKey = selectAllItem.dataset.group;
+
+				const groupItems = [...combo.querySelectorAll(
+				`calcite-combobox-item[value^="${groupKey}:"]`
+				)].filter(item => !item.dataset.selectAll);
+
+				const allSelected = groupItems.every(item => item.selected);
+
+				groupItems.forEach(item => {
+				item.selected = !allSelected;
+				});
+
+				// keep select-all in sync
+				selectAllItem.selected = !allSelected;
+				return;
+			}
+
+			// Sync select-all checkbox when individual items change
+			const selectAllItems = combo.querySelectorAll(
+				"calcite-combobox-item[data-select-all]"
+			);
+
+			selectAllItems.forEach(selectAll => {
+				const groupKey = selectAll.dataset.group;
+
+				const groupItems = [...combo.querySelectorAll(
+				`calcite-combobox-item[value^="${groupKey}:"]`
+				)].filter(item => !item.dataset.selectAll);
+
+				selectAll.selected =
+				groupItems.length > 0 &&
+				groupItems.every(item => item.selected);
+			});
+			});
+
+
 		</script>
 	</body>
 </html>
