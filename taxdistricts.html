@@ -38,10 +38,23 @@
             </div>
 		</div>
         <!-- MAP -->
+		<calcite-panel class="map-panel">
 		<arcgis-map id="map" item-id="715b4ef93362498e97db7393dc2b7d17">
 			<arcgis-layer-list slot="top-right"></arcgis-layer-list>
 		</arcgis-map>
-			<calcite-dialog id="functionsDialog" modal>
+		</calcite-panel>
+		<!--Table-->
+		<calcite-panel class="table-panel">
+			<arcgis-feature-table
+			id="parcelsTable"
+			reference-element="map"
+			hide-selection-column>
+			</arcgis-feature-table>
+		</calcite-panel>	
+
+
+		<!--Functions Button-->
+		<calcite-dialog id="functionsDialog" modal>
 		<h3 slot="heading">Tools & Functions</h3>
 		<div style="padding: 6px;">
 			<calcite-card>
@@ -71,10 +84,12 @@
 			</footer>
 
 		<script type="module">
-			const [SearchSource, Graphic, FeatureFilter] = await $arcgis.import([
+			const [SearchSource, Graphic, FeatureFilter, FeatureLayer, reactiveUtils] = await $arcgis.import([
 			"@arcgis/core/widgets/Search/SearchSource.js",
 			"@arcgis/core/Graphic.js",
-			"@arcgis/core/layers/support/FeatureFilter.js"
+			"@arcgis/core/layers/support/FeatureFilter.js",
+			"@arcgis/core/layers/FeatureLayer.js",
+			"@arcgis/core/core/reactiveUtils.js"
 			
 			]);
 
@@ -84,6 +99,7 @@
 			const map = view.map;
 			const functionsButton=document.getElementById("functionsButton");
 			const functionsDialog=document.getElementById("functionsDialog");
+			const tableElement = document.querySelector("arcgis-feature-table");
 
 			functionsButton.addEventListener("click",() =>{
 				functionsDialog.open=true;
@@ -92,11 +108,14 @@
 
 			// Wait until layers load
 			await view.when();
+			await map.when();
 
-			// Find the "Parcels" layer (you said it will always be titled Parcels / or your layer title)
+			// Find the "Parcels" layer
 			// Using your current title from the scene example:
 			const parcelLayer = map.allLayers.find(l => l.title === "Parcels");
 			await parcelLayer.load();
+
+			tableElement.layer = parcelLayer;
 
 			// Custom layer-only search source
 			const parcelSearchSource = new SearchSource({
