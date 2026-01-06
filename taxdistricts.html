@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
+		<title>2D Map Template (Parcel Search Only)</title>
+		<link rel="stylesheet" href="css/main.css" />
+
+		<!-- Calcite + ArcGIS ESM -->
+		<script type="module" src="https://js.arcgis.com/calcite-components/3.3.3/calcite.esm.js"></script>
+		<link rel="stylesheet" href="https://js.arcgis.com/calcite-components/3.3.3/calcite.css" />
+		<script src="https://js.arcgis.com/4.34/"></script>
+		<script type="module" src="https://js.arcgis.com/4.34/map-components/"></script>
+	</head>
+
+	<body>
+		<header>
+			<img src="https://jcgis.jacksongov.org/images/largelogo.png" alt="Logo">
+				<h2>Map Viewer Template</h2>
+				<arcgis-search id="search" include-default-sources-disabled=""></arcgis-search>
+			</header>
+
+	<div id="ui-container">
+		<!-- LEFT SIDEBAR -->
+		<div id="left-sidebar">
+
+			<!-- SPECIAL TAX DISTRICTS -->
+            <div>
+				<calcite-combobox placeholder="Select a field" select-all-enabled>
+					<calcite-combobox-item-group id="cid-names" label="CID"></calcite-combobox-item-group>
+					<calcite-combobox-item-group id="tdd-names" label="TDD"></calcite-combobox-item-group>
+					<calcite-combobox-item-group id="tifproj-names" label="TIF Project"></calcite-combobox-item-group>
+					<calcite-combobox-item-group id="tifplan-names" label="TIF Plan District"></calcite-combobox-item-group>
+				</calcite-combobox>
+            </div>
+		</div>
+        <!-- MAP -->
+        <arcgis-map item-id="715b4ef93362498e97db7393dc2b7d17">
+        <arcgis-zoom slot="top-left"></arcgis-zoom>
+        <arcgis-expand slot="top-left" group="top-left">
+            <arcgis-legend></arcgis-legend>
+        </arcgis-expand>
+        </arcgis-map>
+	</div>
+
+		<footer>
+			&copy; 2025 - Jackson County Missouri GIS
+			<img src="https://jcgis.jacksongov.org/images/Icons/globe-glow.svg"
+				alt="Globe Icon"
+				style="width:20px;height:20px;vertical-align:text-bottom;margin-left:1px;filter:invert(70%);">
+			</footer>
+
+		<script type="module">
+			const [SearchSource, Graphic, FeatureFilter] = await $arcgis.import([
+			"@arcgis/core/widgets/Search/SearchSource.js",
+			"@arcgis/core/Graphic.js",
+			"@arcgis/core/layers/support/FeatureFilter.js"
+			
+			]);
+
+			const mapEl = document.getElementById("map");
+			await mapEl.viewOnReady();
+			const view = mapEl.view;
+			const map = view.map;
+
+			// Wait until layers load
+			await view.when();
+
+			// Find the "Parcels" layer (you said it will always be titled Parcels / or your layer title)
+			// Using your current title from the scene example:
+			const parcelLayer = map.allLayers.find(l => l.title === "Parcels");
+			await parcelLayer.load();
+
+			// Custom layer-only search source
+			const parcelSearchSource = new SearchSource({
+			placeholder: "Search Parcels by Name",
+			getSuggestions: async (params) => {
+			const res = await parcelLayer.queryFeatures({
+			where: `UPPER(Name) LIKE UPPER('%${params.suggestTerm.replace(/'/g, "''")}%')`,
+			outFields: ["OBJECTID", "Name"],
+			returnGeometry: false
+			});
+
+			return res.features.map(f => ({
+			key: f.attributes.OBJECTID,
+			text: f.attributes.Name,
+			sourceIndex: params.sourceIndex
+			}));
+			},
+			getResults: async (params) => {
+			const where = params.suggestResult?.key
+			? `OBJECTID = ${params.suggestResult.key}`
+			: `UPPER(Name) LIKE UPPER('%${params.searchTerm.replace(/'/g, "''")}%')`;
+
+			const res = await parcelLayer.queryFeatures({
+			where,
+			outFields: ["OBJECTID", "Name"],
+			returnGeometry: true
+			});
+
+			return res.features.map(f => ({
+			name: f.attributes.Name,
+			feature: f
+			}));
+			}
+			});
+
+			const searchEl = document.getElementById("search");
+			searchEl.sources = [parcelSearchSource];
+
+			// On select/search complete: zoom + highlight
+			searchEl.addEventListener("arcgisSearchComplete", async (evt) => {
+			const result = evt.detail?.results?.[0]?.results?.[0];
+			if (!result) return;
+
+			const feature = result.feature;
+
+			view.graphics.removeAll();
+			view.graphics.add(new Graphic({
+			geometry: feature.geometry,
+			symbol: {
+			type: "simple-fill",
+			color: [0, 255, 255, 0.4],
+			outline: { color: [0, 255, 255], width: 2 }
+			}
+			}));
+
+			await view.goTo(feature.geometry.extent.expand(2));
+			});
+		</script>
+	</body>
+</html>
