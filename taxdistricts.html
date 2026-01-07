@@ -430,10 +430,10 @@
 		// Listen for combobox selection changes
 		combobox.addEventListener("calciteComboboxChange", () => {
 		const whereClause = buildComboboxWhereClause();
-		console.log("New WHERE clause:", whereClause);
 
 		// Update FeatureTable filter
 		featureTable.viewModel.definitionExpression = whereClause;
+
 
 		});
 		
