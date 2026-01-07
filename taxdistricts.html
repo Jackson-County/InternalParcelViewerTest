@@ -61,7 +61,7 @@
             </div>
 			<!-- Selection List -->
 			<div id="districtselection" class="panel">
-				<h4>Selected Items</h4>
+				<h4>Selected Districts</h4>
 				<div id="selectionList"></div>
 			</div>
 		</div>
@@ -72,7 +72,8 @@
 		</arcgis-map>
 		</calcite-panel>
 		<!--Table-->
-		<calcite-panel id ="parcelsTable" class="table-panel">
+		<calcite-panel class="table-panel">
+			<div id ="parcelsTable" class="table-container"style="height: 100%; width: 100%;"></div>
 		</calcite-panel>	
 
 
@@ -172,6 +173,7 @@
 			]
 			}),   
 			container: "parcelsTable",
+			size: 12,
 			visibleElements: {
 				menuItems: false,   // hide menu if desired
 				selectionColumn: true // show the row selection checkboxes
@@ -338,7 +340,6 @@
 		// Update previous selection for next event
 		prevSelectedValues = currentSelectedValues;
 		});
-
 			
 
 		//Return selected items in selection list
@@ -435,7 +436,7 @@
 		featureTable.viewModel.definitionExpression = whereClause;
 
 		});
-
+		
 		</script>
 	</body>
 </html>
