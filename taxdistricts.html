@@ -107,13 +107,14 @@
 			</footer>
 
 		<script type="module">
-			const [SearchSource, Graphic, FeatureFilter, FeatureLayer, reactiveUtils, FeatureTable] = await $arcgis.import([
+			const [SearchSource, Graphic, FeatureFilter, FeatureLayer, reactiveUtils, FeatureTable, FeatureTableVM] = await $arcgis.import([
 			"@arcgis/core/widgets/Search/SearchSource.js",
 			"@arcgis/core/Graphic.js",
 			"@arcgis/core/layers/support/FeatureFilter.js",
 			"@arcgis/core/layers/FeatureLayer.js",
 			"@arcgis/core/core/reactiveUtils.js",
-			"@arcgis/core/widgets/FeatureTable.js"			
+			"@arcgis/core/widgets/FeatureTable.js",
+			"@arcgis/core/widgets/FeatureTable/FeatureTableViewModel.js"			
 			]);
 
 			const mapEl = document.getElementById("map");
@@ -386,6 +387,54 @@
 		});
 		});
 
+		//Query Table
+		// Map combobox group labels to fields
+		const groupFieldMap = {
+		"CID": "CID",
+		"TDD": "TDD",
+		"TIF Projects": "TIFproject",
+		"TIF Plan District": "TIFdistrict"
+		};
+
+		// Function to build a SQL WHERE clause from the combobox selections
+		function buildComboboxWhereClause() {
+		const combobox = document.getElementById("fieldBox");
+		const selectedItems = Array.from(combobox.selectedItems);
+
+		const groupedSelections = {};
+
+		selectedItems.forEach((item) => {
+			if (item.value.startsWith("select-all-")) return;
+
+			const parentGroup = item.closest("calcite-combobox-item-group");
+			const groupKey = parentGroup?.label || parentGroup?.id || "Ungrouped";
+
+			if (!groupedSelections[groupKey]) groupedSelections[groupKey] = [];
+			groupedSelections[groupKey].push(item.value.split(":")[1]);
+		});
+
+		const clauses = [];
+
+		Object.entries(groupedSelections).forEach(([groupName, values]) => {
+			const field = groupFieldMap[groupName];
+			if (!field || values.length === 0) return;
+
+			const formattedValues = values.map(v => `'${v.replace(/'/g, "''")}'`).join(", ");
+			clauses.push(`${field} IN (${formattedValues})`);
+		});
+
+		return clauses.length > 0 ? clauses.join(" OR ") : "1=1";
+		}
+
+		// Listen for combobox selection changes
+		combobox.addEventListener("calciteComboboxChange", () => {
+		const whereClause = buildComboboxWhereClause();
+		console.log("New WHERE clause:", whereClause);
+
+		// Update FeatureTable filter
+		featureTable.viewModel.definitionExpression = whereClause;
+
+		});
 
 		</script>
 	</body>
