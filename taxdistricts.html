@@ -4,13 +4,13 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
 		<title>2D Map Template (Parcel Search Only)</title>
-		<link rel="stylesheet" href="css/main.css" />
-
+	
 		<!-- Calcite + ArcGIS ESM -->
 		<script type="module" src="https://js.arcgis.com/calcite-components/3.3.3/calcite.esm.js"></script>
 		<link rel="stylesheet" href="https://js.arcgis.com/calcite-components/3.3.3/calcite.css" />
 		<script src="https://js.arcgis.com/4.34/"></script>
 		<script type="module" src="https://js.arcgis.com/4.34/map-components/"></script>
+		<link rel="stylesheet" href="css/main.css" />
 	</head>
 
 	<body>
@@ -29,7 +29,30 @@
 
 			<!-- SPECIAL TAX DISTRICTS -->
             <div>
-				<calcite-combobox placeholder="Select a field" selection-display="single" select-all-enabled>
+				<calcite-combobox id="fieldBox" placeholder="Select a field" select-all-enabled selection-display="single">
+						<calcite-combobox-item
+						value="select-all-cid"
+						heading="Select all CID"
+						data-target-group="cid-names">
+						</calcite-combobox-item>
+
+						<calcite-combobox-item
+						value="select-all-tdd"
+						heading="Select all TDD"
+						data-target-group="tdd-names">
+						</calcite-combobox-item>
+
+						<calcite-combobox-item
+						value="select-all-tifproj"
+						heading="Select all TIF Projects"
+						data-target-group="tifproj-names">
+						</calcite-combobox-item>
+
+						<calcite-combobox-item
+						value="select-all-tifplan"
+						heading="Select all TIF Plan Districts"
+						data-target-group="tifplan-names">
+						</calcite-combobox-item>
 					<calcite-combobox-item-group id="cid-names" label="CID"></calcite-combobox-item-group>
 					<calcite-combobox-item-group id="tdd-names" label="TDD"></calcite-combobox-item-group>
 					<calcite-combobox-item-group id="tifproj-names" label="TIF Projects"></calcite-combobox-item-group>
@@ -239,7 +262,39 @@
 				fieldName: "Name",
 				groupId: "tifplan-names",
 				valuePrefix: "TIF_PLAN"
-			});		
+			});
+			
+			const combobox = document.getElementById("fieldBox");
+
+			combobox.addEventListener("calciteComboboxChange", (event) => {
+			const selectedValues = new Set(
+				event.target.selectedItems.map(item => item.value)
+			);
+
+			// Loop through all select-all triggers
+			combobox.querySelectorAll("calcite-combobox-item[value^='select-all-']")
+				.forEach((selectAllItem) => {
+
+				const targetGroupId =
+					selectAllItem.getAttribute("data-target-group");
+				if (!targetGroupId) return;
+
+				const group = combobox.querySelector(
+					`calcite-combobox-item-group#${targetGroupId}`
+				);
+				if (!group) return;
+
+				const shouldSelect =
+					selectedValues.has(selectAllItem.value);
+
+				// Toggle group items based on select-all state
+				group.querySelectorAll("calcite-combobox-item")
+					.forEach((groupItem) => {
+					groupItem.selected = shouldSelect;
+					});
+				});
+			});
+
 		</script>
 	</body>
 </html>
