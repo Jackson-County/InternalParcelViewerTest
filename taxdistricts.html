@@ -59,6 +59,11 @@
 					<calcite-combobox-item-group id="tifplan-names" label="TIF Plan District"></calcite-combobox-item-group>
 				</calcite-combobox>
             </div>
+			<!-- Selection List -->
+			<div id="districtselection" class="panel">
+				<h4>Selected Items</h4>
+				<div id="selectionList"></div>
+			</div>
 		</div>
         <!-- MAP -->
 		<calcite-panel class="map-panel">
@@ -264,36 +269,89 @@
 				valuePrefix: "TIF_PLAN"
 			});
 			
-			const combobox = document.getElementById("fieldBox");
+		const combobox = document.getElementById("fieldBox");
 
-			combobox.addEventListener("calciteComboboxChange", (event) => {
-			const selectedValues = new Set(
-				event.target.selectedItems.map(item => item.value)
+		// Keep track of previous selectedItems for comparison
+		let prevSelectedValues = new Set();
+
+		combobox.addEventListener("calciteComboboxChange", (event) => {
+		const currentSelectedValues = new Set(
+			event.target.selectedItems.map(item => item.value)
+		);
+
+		// Handle only the select-all items that changed
+		combobox.querySelectorAll("calcite-combobox-item[value^='select-all-']")
+			.forEach(selectAllItem => {
+			const targetGroupId = selectAllItem.getAttribute("data-target-group");
+			if (!targetGroupId) return;
+
+			const group = combobox.querySelector(
+				`calcite-combobox-item-group#${targetGroupId}`
 			);
+			if (!group) return;
 
-			// Loop through all select-all triggers
-			combobox.querySelectorAll("calcite-combobox-item[value^='select-all-']")
-				.forEach((selectAllItem) => {
+			const wasSelected = prevSelectedValues.has(selectAllItem.value);
+			const isSelected = currentSelectedValues.has(selectAllItem.value);
 
-				const targetGroupId =
-					selectAllItem.getAttribute("data-target-group");
-				if (!targetGroupId) return;
-
-				const group = combobox.querySelector(
-					`calcite-combobox-item-group#${targetGroupId}`
-				);
-				if (!group) return;
-
-				const shouldSelect =
-					selectedValues.has(selectAllItem.value);
-
-				// Toggle group items based on select-all state
-				group.querySelectorAll("calcite-combobox-item")
-					.forEach((groupItem) => {
-					groupItem.selected = shouldSelect;
-					});
+			// Only toggle group items if this select-all item changed
+			if (wasSelected !== isSelected) {
+				group.querySelectorAll("calcite-combobox-item").forEach(groupItem => {
+				groupItem.selected = isSelected;
 				});
+			}
 			});
+
+		// Update previous selection for next event
+		prevSelectedValues = currentSelectedValues;
+		});
+
+			
+
+		//Return selected items in selection list
+		const selectionList = document.getElementById("selectionList");
+
+		combobox.addEventListener("calciteComboboxChange", (event) => {
+		const selectedItems = Array.from(event.target.selectedItems);
+
+		// Clear previous list
+		selectionList.innerHTML = "";
+
+		// Map group id → array of selected items
+		const groupedSelections = {};
+
+		selectedItems.forEach((item) => {
+			// Skip select-all triggers
+			if (item.value.startsWith("select-all-")) return;
+
+			// Find parent group
+			const parentGroup = item.closest("calcite-combobox-item-group");
+
+			// Use group label if available, fallback to id
+			const groupKey = parentGroup?.label || parentGroup?.id || "Ungrouped";
+
+			if (!groupedSelections[groupKey]) groupedSelections[groupKey] = [];
+
+			groupedSelections[groupKey].push(item.textLabel);
+		});
+
+		// Build HTML for grouped list
+		Object.entries(groupedSelections).forEach(([groupName, items]) => {
+			// Group header
+			const header = document.createElement("div");
+			header.textContent = groupName;
+			header.style.fontWeight = "bold";
+			header.style.marginTop = "5px";
+			selectionList.appendChild(header);
+
+			// List of items under this group
+			items.forEach((text) => {
+			const listItem = document.createElement("div");
+			listItem.textContent = `${text}`;
+			listItem.style.marginLeft = "15px";
+			selectionList.appendChild(listItem);
+			});
+		});
+		});
 
 		</script>
 	</body>
