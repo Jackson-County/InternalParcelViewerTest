@@ -29,9 +29,25 @@ export function buildComboboxWhereClause(combobox) {
   return clauses.length ? clauses.join(" OR ") : "1=1";
 }
 
-export function attachQueryTableListener(combobox, featureTable) {
-  combobox.addEventListener("calciteComboboxChange", () => {
+export function attachQueryTableListener(combobox, featureTable, parcelLayer) {
+  combobox.addEventListener("calciteComboboxChange", async () => {
     const whereClause = buildComboboxWhereClause(combobox);
     featureTable.viewModel.definitionExpression = whereClause;
+    try {
+    const query = parcelLayer.createQuery();
+    query.where = whereClause;
+    query.returnGeometry = false;
+    query.outFields = ["OBJECTID"]; // Only need the IDs for selection
+
+    const result = await parcelLayer.queryFeatures(query);
+
+    // Extract object IDs and update the table's selection
+    const objectIds = result.features.map(f => f.attributes.OBJECTID);
+    const highlightIds = featureTable.viewModel.highlightIds;
+    featureTable.highlightIds.removeAll();
+    featureTable.highlightIds.addMany(objectIds);
+    } catch (err) {
+      console.error("Failed to select features in table:", err);
+  }
   });
 }

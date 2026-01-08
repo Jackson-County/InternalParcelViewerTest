@@ -54,7 +54,7 @@ import { attachQueryTableListener } from "./queryTable.js";
   const selectionList = document.getElementById("selectionList");
   attachSelectAllLogic(combobox);
   attachSelectionListLogic(combobox, selectionList);
-  attachQueryTableListener(combobox, featureTable);
+  attachQueryTableListener(combobox, featureTable, parcelLayer);
 
   const functionsButton = document.getElementById("functionsButton");
   const functionsDialog = document.getElementById("functionsDialog");
