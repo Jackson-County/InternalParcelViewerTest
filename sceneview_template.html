@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>3D Scene Template (Parcel Search Only)</title>
+
+  <!-- Calcite + ArcGIS ESM -->
+  <script type="module" src="https://js.arcgis.com/calcite-components/3.3.3/calcite.esm.js"></script>
+  <link rel="stylesheet" href="https://js.arcgis.com/calcite-components/3.3.3/calcite.css" />
+  <script src="https://js.arcgis.com/4.34/"></script>
+  <script type="module" src="https://js.arcgis.com/4.34/map-components/"></script>
+
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: #1a2b55;
+      font-family: "Segoe UI", sans-serif;
+      color: #ecf0f1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    :root {
+      --accent-color: #1c5cff;
+      --select-button-color: #1c5cffcc;
+    }
+
+    header {
+      background: #0a1e3a;
+      color: #fff;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 10px;
+      font-weight: 600;
+      z-index: 2;
+      border-bottom: 3px solid var(--accent-color);
+      position: relative;
+    }
+
+    header img {
+      height: 32px;
+    }
+
+    header h2 {
+      margin: 0;
+      font-size: 1.4em;
+      white-space: nowrap;
+    }
+
+    #ui-container {
+      display: flex;
+      height: calc(100vh - 60px - 28px);
+      width: 100%;
+      overflow: hidden;
+    }
+
+    arcgis-scene {
+      flex: 1;
+      height: 100%;
+      width: 100%;
+    }
+
+    arcgis-layer-list {
+      margin-top: 56px;
+    }
+
+    arcgis-search {
+      position: absolute;
+      right: 20px;
+      top: 10px;
+      z-index: 10;
+    }
+
+    footer {
+      height: 28px;
+      background-color: #0a1e3a;
+      color: #eee;
+      text-align: center;
+      line-height: 28px;
+      font-size: 12px;
+      border-top: 3px solid var(--accent-color);
+      z-index: 2;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <img src="https://jcgis.jacksongov.org/images/largelogo.png" alt="Logo">
+    <h2>Scene Viewer Template</h2>
+    <arcgis-search id="search" include-default-sources-disabled></arcgis-search>
+  </header>
+
+  <div id="ui-container">
+    <arcgis-scene id="scene" item-id="f45587ca1ccb4d918269be01c1428698" environment="lighting: 'sunny'">
+      <arcgis-layer-list slot="top-right"></arcgis-layer-list>
+    </arcgis-scene>
+  </div>
+
+  <footer>
+    &copy; 2025 - Jackson County Missouri GIS
+    <img src="https://jcgis.jacksongov.org/images/Icons/globe-glow.svg"
+         alt="Globe Icon"
+         style="width:20px;height:20px;vertical-align:text-bottom;margin-left:1px;filter:invert(70%);">
+  </footer>
+
+  <script type="module">
+    const [SearchSource, Graphic] = await $arcgis.import([
+      "@arcgis/core/widgets/Search/SearchSource.js",
+      "@arcgis/core/Graphic.js"
+    ]);
+
+    const sceneEl = document.getElementById("scene");
+    await sceneEl.viewOnReady();
+    const view = sceneEl.view;
+    const map = view.map;
+
+    // Wait until layers load
+    await view.when();
+
+    // Find the "Parcels" layer
+    const parcelLayer = map.allLayers.find(l => l.title === "Parcel Condominiums");
+    await parcelLayer.load();
+
+    // Custom layer-only search source
+    const parcelSearchSource = new SearchSource({
+      placeholder: "Search Parcels by Name",
+      getSuggestions: async (params) => {
+        const res = await parcelLayer.queryFeatures({
+          where: `UPPER(Name) LIKE UPPER('%${params.suggestTerm.replace(/'/g, "''")}%')`,
+          outFields: ["OBJECTID", "Name"],
+          returnGeometry: false
+        });
+        return res.features.map(f => ({
+          key: f.attributes.OBJECTID,
+          text: f.attributes.Name,
+          sourceIndex: params.sourceIndex
+        }));
+      },
+      getResults: async (params) => {
+        const where = params.suggestResult?.key
+          ? `OBJECTID = ${params.suggestResult.key}`
+          : `UPPER(Name) LIKE UPPER('%${params.searchTerm.replace(/'/g, "''")}%')`;
+
+        const res = await parcelLayer.queryFeatures({
+          where,
+          outFields: ["OBJECTID", "Name"],
+          returnGeometry: true
+        });
+
+        return res.features.map(f => ({
+          name: f.attributes.Name,
+          feature: f
+        }));
+      }
+    });
+
+    const searchEl = document.getElementById("search");
+    searchEl.sources = [parcelSearchSource];
+
+    searchEl.addEventListener("arcgisSearchComplete", async (evt) => {
+      const result = evt.detail?.results?.[0]?.results?.[0];
+      if (!result) return;
+      const feature = result.feature;
+
+      view.graphics.removeAll();
+      view.graphics.add(new Graphic({
+        geometry: feature.geometry,
+        symbol: {
+          type: "simple-fill",
+          color: [0, 255, 255, 0.4],
+          outline: { color: [0, 255, 255], width: 2 }
+        }
+      }));
+
+      await view.goTo(feature.geometry.extent.expand(2));
+    });
+  </script>
+</body>
+</html>
