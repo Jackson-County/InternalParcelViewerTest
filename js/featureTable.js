@@ -12,10 +12,9 @@ export function createFeatureTable({ view, layer, containerId, FeatureTableClass
       ]
     },
     container: containerId,
-    size: 12,
     visibleElements: {
-      menuItems: false,
-      selectionColumn: true
+    menuItems: false,
+     selectionColumn: true
     },
     editingEnabled: false
   });

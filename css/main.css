@@ -93,9 +93,6 @@ position: relative;
 flex: 1;
 }
 
-arcgis-feature-table {
-height: 100%;
-}
 arcgis-map {
 flex: 1;
 height: 100%;
