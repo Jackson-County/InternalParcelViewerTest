@@ -6,6 +6,7 @@ export const groupFieldMap = {
   "TIF Plan District": "TIFdistrict"
 };
 
+
 export function buildComboboxWhereClause(combobox) {
   const selectedItems = Array.from(combobox.selectedItems);
   const groupedSelections = {};
@@ -29,25 +30,68 @@ export function buildComboboxWhereClause(combobox) {
   return clauses.length ? clauses.join(" OR ") : "1=1";
 }
 
+function hasActiveSelection(combobox) {
+  return Array.from(combobox.selectedItems).some(
+    item => !item.value.startsWith("select-all-")
+  );
+}
+
 export function attachQueryTableListener(combobox, featureTable, parcelLayer) {
   combobox.addEventListener("calciteComboboxChange", async () => {
+
+    if (!hasActiveSelection(combobox)) {
+      featureTable.highlightIds.removeAll();
+      featureTable._allSelectedObjectIds = [];
+      return;
+    }
+
     const whereClause = buildComboboxWhereClause(combobox);
     featureTable.viewModel.definitionExpression = whereClause;
+
     try {
-    const query = parcelLayer.createQuery();
-    query.where = whereClause;
-    query.returnGeometry = false;
-    query.outFields = ["OBJECTID"]; // Only need the IDs for selection
+      const query = parcelLayer.createQuery();
+      query.where = whereClause;
+      query.returnGeometry = false;
 
-    const result = await parcelLayer.queryFeatures(query);
+      const allObjectIds = await parcelLayer.queryObjectIds(query);
 
-    // Extract object IDs and update the table's selection
-    const objectIds = result.features.map(f => f.attributes.OBJECTID);
-    const highlightIds = featureTable.viewModel.highlightIds;
-    featureTable.highlightIds.removeAll();
-    featureTable.highlightIds.addMany(objectIds);
+      featureTable.highlightIds.removeAll();
+
+      const visibleIds = allObjectIds.slice(0, parcelLayer.maxRecordCount);
+      featureTable.highlightIds.addMany(visibleIds);
+
+      featureTable._allSelectedObjectIds = allObjectIds;
+
     } catch (err) {
-      console.error("Failed to select features in table:", err);
-  }
+      console.error("Failed to select features:", err);
+    }
   });
 }
+
+
+
+
+// export function attachQueryTableListener(combobox, featureTable, parcelLayer) {
+//   combobox.addEventListener("calciteComboboxChange", async () => {
+//     const whereClause = buildComboboxWhereClause(combobox);
+//     featureTable.viewModel.definitionExpression = whereClause;
+//     try {
+//     const query = parcelLayer.createQuery();
+//     query.where = whereClause;
+//     query.returnGeometry = false;
+//     query.outFields = ["OBJECTID"];
+//     query.resultRecordCount = parcelLayer.maxRecordCount;
+//     query.resultOffset = 0;
+
+//     const result = await parcelLayer.queryFeatures(query);
+
+//     // Extract object IDs and update the table's selection
+//     const objectIds = result.features.map(f => f.attributes.OBJECTID);
+//     const highlightIds = featureTable.viewModel.highlightIds;
+//     featureTable.highlightIds.removeAll();
+//     featureTable.highlightIds.addMany(objectIds);
+//     } catch (err) {
+//       console.error("Failed to select features in table:", err);
+//   }
+//   });
+// }
