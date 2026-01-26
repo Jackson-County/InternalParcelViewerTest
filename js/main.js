@@ -23,6 +23,7 @@ import { createParcelSearch } from "./searchParcels.js";
 import { populateComboboxGroup, attachSelectAllLogic, attachSelectionListLogic } from "./combobox.js";
 import { attachQueryTableListener } from "./queryTable.js";
 
+
 (async function() {
   const mapEl = document.getElementById("map");
   const { map, view, parcelLayer } = await initMap(mapEl);

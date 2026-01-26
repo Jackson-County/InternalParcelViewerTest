@@ -1,4 +1,3 @@
-// queryTable.js
 export const groupFieldMap = {
   "CID": "CID",
   "TDD": "TDD",
@@ -67,31 +66,3 @@ export function attachQueryTableListener(combobox, featureTable, parcelLayer) {
     }
   });
 }
-
-
-
-
-// export function attachQueryTableListener(combobox, featureTable, parcelLayer) {
-//   combobox.addEventListener("calciteComboboxChange", async () => {
-//     const whereClause = buildComboboxWhereClause(combobox);
-//     featureTable.viewModel.definitionExpression = whereClause;
-//     try {
-//     const query = parcelLayer.createQuery();
-//     query.where = whereClause;
-//     query.returnGeometry = false;
-//     query.outFields = ["OBJECTID"];
-//     query.resultRecordCount = parcelLayer.maxRecordCount;
-//     query.resultOffset = 0;
-
-//     const result = await parcelLayer.queryFeatures(query);
-
-//     // Extract object IDs and update the table's selection
-//     const objectIds = result.features.map(f => f.attributes.OBJECTID);
-//     const highlightIds = featureTable.viewModel.highlightIds;
-//     featureTable.highlightIds.removeAll();
-//     featureTable.highlightIds.addMany(objectIds);
-//     } catch (err) {
-//       console.error("Failed to select features in table:", err);
-//   }
-//   });
-// }
