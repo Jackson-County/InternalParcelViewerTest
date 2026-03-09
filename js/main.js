@@ -1,4 +1,3 @@
-// Load ArcGIS classes once here
 const [
   Graphic,
   FeatureLayer,
@@ -25,10 +24,9 @@ import { attachQueryTableListener } from "./queryTable.js";
 
 
 (async function() {
-  const mapEl = document.getElementById("map");
+  const mapEl = document.getElementById("saMap");
   const { map, view, parcelLayer } = await initMap(mapEl);
 
-  // Pass ArcGIS classes into your modules
   const featureTable = createFeatureTable({
     view,
     layer: parcelLayer,
@@ -45,7 +43,6 @@ import { attachQueryTableListener } from "./queryTable.js";
     GraphicClass: Graphic
   });
 
-  // Combobox logic
   await populateComboboxGroup({ map, layerTitle: "CID", fieldName: "Name", groupId: "cid-names", valuePrefix: "CID" });
   await populateComboboxGroup({ map, layerTitle: "TDD", fieldName: "Name", groupId: "tdd-names", valuePrefix: "TDD" });
   await populateComboboxGroup({ map, layerTitle: "TIF Projects", fieldName: "Name", groupId: "tifproj-names", valuePrefix: "TIF_PROJECT" });
@@ -57,7 +54,4 @@ import { attachQueryTableListener } from "./queryTable.js";
   attachSelectionListLogic(combobox, selectionList);
   attachQueryTableListener(combobox, featureTable, parcelLayer);
 
-  const functionsButton = document.getElementById("functionsButton");
-  const functionsDialog = document.getElementById("functionsDialog");
-  functionsButton.addEventListener("click", () => { functionsDialog.open = true; });
 })();
