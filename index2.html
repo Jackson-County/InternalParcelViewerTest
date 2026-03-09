@@ -1,0 +1,1355 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
+	<title>Parcel Viewer — Tabs + 2D/3D</title>
+
+	<!-- Calcite + ArcGIS ESM -->
+	<script type="module" src="https://js.arcgis.com/5.0/"></script>
+
+	<style>
+		html, body {
+			height: 100%;
+			margin: 0;
+			background: #1a2b55;
+			font-family: "Segoe UI", sans-serif;
+			color: #ecf0f1;
+			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+		}
+
+		:root {
+			--accent-color: #1c5cff;
+			--select-button-color: #1c5cffcc;
+		}
+
+		header {
+			background: #0a1e3a;
+			color: #fff;
+			height: 60px;
+			display: flex;
+			align-items: center;
+			padding: 0 16px;
+			gap: 10px;
+			font-weight: 600;
+			z-index: 2;
+			border-bottom: 3px solid var(--accent-color);
+			position: relative;
+		}
+
+		.header-left {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			height: 60px;
+			flex: 0 0 auto;
+		}
+
+		header img {
+			height: 32px;
+		}
+
+		header h2 {
+			margin: 0;
+			font-size: 1.4em;
+		}
+
+		footer {
+			height: 28px;
+			background-color: #0a1e3a;
+			color: #eee;
+			text-align: center;
+			line-height: 28px;
+			font-size: 12px;
+			border-top: 3px solid var(--accent-color);
+			z-index: 2;
+		}
+
+		#preloader {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background: #0a1e3a;
+			color: white;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 1.4em;
+			z-index: 2000;
+		}
+
+		#ui-container {
+			flex: 1;
+			display: flex;
+			overflow: hidden;
+			z-index: 50;
+		}
+
+		/* pages */
+		.app-page {
+			flex: 1;
+			display: none;
+			overflow: hidden;
+		}
+
+			.app-page.visible {
+				display: flex;
+			}
+
+		/* Sidebar */
+		#left-sidebar {
+			width: 260px;
+			background: #0a1e3a;
+			color: white;
+			display: flex;
+			flex-direction: column;
+			padding: 10px;
+			gap: 12px;
+			border-right: 3px solid #122f57;
+			overflow: hidden;
+			z-index: 10;
+		}
+
+		.panel {
+			background: #10294a;
+			padding: 10px;
+			border-radius: 6px;
+			box-shadow: 0 0 4px rgba(0,0,0,0.4);
+			height: auto;
+		}
+
+			.panel h3 {
+				margin: 0 0 8px 0;
+				padding-bottom: 4px;
+				border-bottom: 1px solid #2f6df2;
+				font-size: 15px;
+			}
+
+		#buildingSearch, #parcelSearch {
+			width: 90%;
+			padding: 6px 8px;
+			margin-bottom: 8px;
+			border: 1px solid #284977;
+			border-radius: 4px;
+			background: #0e203a;
+			color: white;
+		}
+
+		#buildingList, #floorList, #parcelList {
+			max-height: 80vh;
+			overflow-y: auto;
+			overflow-x: clip;
+			margin-top: 8px;
+		}
+
+		.building-list-item,
+		.parcel-list-item {
+			display: block;
+			width: 100%;
+			background-color: #34495e;
+			margin: 7px 0;
+			padding: 6px 10px;
+			border-radius: 6px;
+			font-size: 13px;
+			cursor: pointer;
+			transition: background 0.2s ease;
+			color: #ecf0f1;
+			box-sizing: border-box;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			position: relative;
+		}
+
+			.building-list-item:hover,
+			.parcel-list-item:hover {
+				border-color: #1c5cffcc;
+				box-shadow: 0 0 10px #1c5cffaa;
+				font-weight: bold;
+				background-color: #1a2b55;
+			}
+
+		.selected {
+			background: #1c5cff22;
+			border-color: #1c5cffcc;
+			box-shadow: 0 0 10px #1c5cffaa;
+			font-weight: bold;
+			border: 1px solid var(--select-button-color);
+		}
+
+		/* Search */
+		arcgis-search {
+			right: 20px;
+			position: absolute;
+			z-index: 1100;
+		}
+
+		:root {
+			--calcite-popover-z-index: 5000;
+			--calcite-tooltip-z-index: 5000;
+		}
+
+		/* Extra safety if any popovers still end up behind */
+		calcite-popover,
+		calcite-dropdown,
+		calcite-tooltip {
+			z-index: 5000 !important;
+		}
+
+		/* view containers */
+		.page-view {
+			flex: 1 1 auto;
+			position: relative;
+			overflow: hidden;
+			min-width: 0;
+		}
+
+		/* stack map + scene on top of each other */
+		.view-element {
+			position: absolute;
+			inset: 0;
+			opacity: 0;
+			visibility: hidden;
+			pointer-events: none;
+			transition: opacity 400ms ease, visibility 400ms ease;
+		}
+
+			.view-element.visible {
+				opacity: 1;
+				visibility: visible;
+				pointer-events: auto;
+			}
+
+		/* Selected parcels floating panel */
+		#selectedParcelList {
+			width: 320px;
+			background-color: #1a2b55;
+			color: white;
+			border-radius: 8px;
+			padding: 10px;
+			box-shadow: 0 0 7px 0.5px var(--select-button-color);
+			font-size: 13px;
+			position: absolute;
+			right: 20px;
+			display: none;
+			gap: 10px;
+			bottom: 60px;
+			z-index: 20;
+		}
+
+		.selected-parcel-item {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			box-shadow: 0 0 6px 2px var(--select-button-color);
+			font-weight: bold;
+			border: 1px solid var(--accent-color);
+			padding: 6px 8px;
+			margin-bottom: 6px;
+			border-radius: 5px;
+		}
+
+		.remove-button {
+			background-color: #b40000;
+			border: none;
+			padding: 3px 6px;
+			border-radius: 3px;
+			color: white;
+			cursor: pointer;
+			font-size: 12px;
+		}
+
+		#launchSurveyButton {
+			background-color: var(--accent-color);
+			border: none;
+			padding: 6px 10px;
+			margin-top: 10px;
+			border-radius: 4px;
+			color: white;
+			cursor: pointer;
+			font-weight: bold;
+			width: 100%;
+		}
+
+		/* --- Header tabs --- */
+		.header-tabs {
+			display: flex;
+			gap: 6px;
+			align-items: flex-end;
+			align-self: flex-end;
+			margin-left: 14px;
+		}
+
+		.header-tab {
+			--tab-color: #1c5cff;
+			position: relative;
+			height: 25px;
+			padding: 0 10px;
+			gap: 6px;
+			display: inline-flex;
+			align-items: center;
+			background: #0a1e3a;
+			color: var(--tab-color);
+			border-bottom: 0;
+			border-radius: 10px 10px 0 0;
+			cursor: pointer;
+			white-space: nowrap;
+			/*box-shadow: 0 -5px 5px color-mix(in srgb, var(--tab-color) 55%, transparent);*/
+			text-shadow: 0 0 10px color-mix(in srgb, var(--tab-color) 75%, transparent);
+			transition: 140ms ease;
+			border: 0;
+			margin: 0 5px 0 5px;
+		}
+
+			.header-tab.active {
+				height: 42px;
+				background: var(--tab-color);
+				color: #ffffff;
+				font-weight: 800;
+				text-shadow: none;
+				margin: 0 25px 0 25px;
+			}
+
+			/* inactive tabs only */
+			.header-tab:not(.active) {
+				box-shadow: 0 -5px 5px color-mix(in srgb, var(--tab-color) 55%, transparent);
+			}
+
+
+			.header-tab:hover {
+				transform: translateY(-1px);
+				z-index: 55;
+				box-shadow: 0 0 16px color-mix(in srgb, var(--tab-color) 75%, transparent), 0 0 28px color-mix(in srgb, var(--tab-color) 30%, transparent);
+			}
+
+			.header-tab span {
+				font-size: 13px;
+			}
+
+
+
+			.header-tab calcite-icon {
+				transform: scale(0.9);
+			}
+
+		#parcelViewerTab {
+			--tab-color: #1c5cff;
+		}
+
+		#publicWorksTab {
+			--tab-color: #76cafb;
+		}
+
+		#specialAssessTab {
+			--tab-color: #06a91a;
+		}
+
+		/* floating 2D/3D toggle (Parcel page only) */
+		.view-toggle-fab {
+			position: absolute;
+			top: 14px;
+			left: 14px;
+			z-index: 50;
+			width: 44px;
+			height: 44px;
+			border-radius: 12px;
+			border: 1px solid #1c5cff55;
+			background: #0e203a;
+			color: #fff;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			cursor: pointer;
+			box-shadow: 0 0 10px #00000066;
+			transition: 140ms ease;
+		}
+
+			.view-toggle-fab:hover {
+				border-color: #1c5cffcc;
+				box-shadow: 0 0 16px #1c5cffaa;
+				transform: translateY(-1px);
+			}
+
+			.view-toggle-fab:active {
+				transform: scale(0.94);
+			}
+		/* Apply to all 3 lists */
+		#buildingList, #floorList, #parcelList {
+			scrollbar-gutter: stable;
+			overscroll-behavior: contain;
+			scroll-behavior: smooth;
+		}
+
+			/* Chrome / Edge / Safari */
+			#buildingList::-webkit-scrollbar,
+			#floorList::-webkit-scrollbar,
+			#parcelList::-webkit-scrollbar {
+				width: 10px;
+			}
+
+			#buildingList::-webkit-scrollbar-track,
+			#floorList::-webkit-scrollbar-track,
+			#parcelList::-webkit-scrollbar-track {
+				background: rgba(0,0,0,0.18);
+				border-left: 1px solid rgba(28,92,255,0.15);
+				border-radius: 999px;
+			}
+
+			#buildingList::-webkit-scrollbar-thumb,
+			#floorList::-webkit-scrollbar-thumb,
+			#parcelList::-webkit-scrollbar-thumb {
+				background: linear-gradient(180deg, rgba(28,92,255,0.95), rgba(118,202,251,0.85) );
+				border-radius: 999px;
+				border: 2px solid rgba(10,30,58,0.85);
+				box-shadow: 0 0 10px rgba(28,92,255,0.55);
+			}
+
+				#buildingList::-webkit-scrollbar-thumb:hover,
+				#floorList::-webkit-scrollbar-thumb:hover,
+				#parcelList::-webkit-scrollbar-thumb:hover {
+					box-shadow: 0 0 16px rgba(28,92,255,0.85);
+				}
+
+		/* Firefox */
+		#buildingList, #floorList, #parcelList {
+			scrollbar-width: thin;
+			scrollbar-color: rgba(28,92,255,0.95) rgba(0,0,0,0.18);
+		}
+
+		.title-stack {
+			display: flex;
+			flex-direction: column;
+			align-items: center; /* centers “Internal” under the h2 */
+			line-height: 1.05;
+		}
+
+			.title-stack h2 {
+				margin: 0;
+				font-size: 1.4em;
+			}
+
+			/* INTERNAL subtitle: subtle accent neon (no glass/shimmer) */
+			.title-stack .subtitle {
+				margin-top: 2px;
+				font-size: 12px;
+				font-style: italic;
+				font-weight: 700;
+				letter-spacing: 0.45px;
+				color: #18daed;
+				/* subtle neon */
+				text-shadow: 0 0 4px color-mix(in srgb, #18daed 45%, transparent), 0 0 10px color-mix(in srgb, var(--accent-color) 22%, transparent);
+			}
+	</style>
+</head>
+
+<body>
+	<div id="preloader">Loading… Please wait</div>
+
+	<header>
+		<div class="header-left">
+			<img src="https://jcgis.jacksongov.org/images/largelogo.png" alt="Logo">
+			<div class="title-stack">
+				<h2>Parcel Viewer</h2>
+				<div class="subtitle">Internal</div>
+			</div>
+
+			<div class="header-tabs" role="tablist" aria-label="Main tabs">
+				<button id="parcelViewerTab" class="header-tab active" role="tab" aria-selected="true">
+					<calcite-icon icon="parcel-layer" scale="m"></calcite-icon>
+					<span>Parcel Viewer</span>
+				</button>
+
+				<button id="publicWorksTab" class="header-tab" role="tab" aria-selected="false">
+					<calcite-icon icon="wrench" scale="m"></calcite-icon>
+					<span>Public Works</span>
+				</button>
+
+				<button id="specialAssessTab" class="header-tab" role="tab" aria-selected="false">
+					<calcite-icon icon="analysis" scale="m"></calcite-icon>
+					<span>Special Assessment</span>
+				</button>
+			</div>
+
+			<arcgis-search id="search" include-default-sources-disabled></arcgis-search>
+	</header>
+
+	<div id="ui-container">
+		<!-- PARCEL PAGE -->
+		<div id="page-parcel" class="app-page visible">
+			<div id="left-sidebar">
+				<div id="buildingPanel" class="panel">
+					<h3>Buildings</h3>
+					<input type="text" id="buildingSearch" placeholder="Search buildings…" />
+					<div id="buildingList"></div>
+				</div>
+
+				<div id="floorPanel" class="panel" style="display:none;">
+					<h3>Floors</h3>
+					<div id="floorList"></div>
+				</div>
+
+				<div id="parcelPanel" class="panel" style="display:none;">
+					<h3>Parcels</h3>
+					<input type="text" id="parcelSearch" placeholder="Search parcels…" />
+					<div id="parcelList"></div>
+				</div>
+			</div>
+
+			<div id="parcelView" class="page-view">
+				<!-- Floating 2D/3D toggle (ONLY for Parcel Viewer) -->
+				<button id="viewToggleFab" class="view-toggle-fab" title="Switch 2D / 3D">
+					<calcite-icon id="viewToggleFabIcon" icon="3d-glasses" scale="l"></calcite-icon>
+				</button>
+
+
+				<arcgis-map id="map2d" class="view-element visible" item-id="0561cabf74ff48a4af41d3130fd103d9">
+					<arcgis-expand slot="top-right" mode="floating" visual-scale="l">
+						<arcgis-basemap-gallery></arcgis-basemap-gallery>
+					</arcgis-expand>
+				</arcgis-map>
+				<arcgis-scene id="scene" class="view-element" item-id="f45587ca1ccb4d918269be01c1428698" environment="lighting: 'sunny'">
+					<arcgis-expand slot="bottom-right" mode="floating" visual-scale="s">
+						<arcgis-basemap-gallery></arcgis-basemap-gallery>
+					</arcgis-expand>
+				</arcgis-scene>
+			</div>
+
+			<div id="selectedParcelList">
+				<h3>Selected Parcels</h3>
+				<div id="selectedParcelContent"></div>
+				<button id="launchSurveyButton">Launch Survey123</button>
+			</div>
+		</div>
+
+		<!-- PUBLIC WORKS PAGE -->
+		<div id="page-pw" class="app-page">
+			<div class="page-view">
+				<arcgis-map id="pwMap" class="view-element visible" item-id="af689ed76f0842b5a7383bff11a6892c"> <arcgis-basemap-gallery slot="top-right"></arcgis-basemap-gallery></arcgis-map>
+			</div>
+		</div>
+
+		<!-- SPECIAL ASSESSMENT PAGE -->
+		<div id="page-sa" class="app-page">
+			<div class="page-view">
+				<arcgis-map id="saMap" class="view-element visible" item-id="bb924a2b9c0143e196d1fa485b09aaef"><arcgis-basemap-gallery slot="top-right"></arcgis-basemap-gallery></arcgis-map>
+			</div>
+		</div>
+	</div>
+
+	<footer id="footer">
+		&copy; 2026 - Jackson County Missouri GIS
+		<img src="https://jcgis.jacksongov.org/images/Icons/globe-glow.svg"
+			alt="Globe Icon"
+			style="width:20px; height:20px; vertical-align: text-bottom; margin-left:1px; filter: invert(70%);">
+	</footer>
+
+	<script type="module">
+		const preloader=document.getElementById("preloader");
+
+		try
+		{
+			const [
+				SearchSource,
+				Graphic,
+				FeatureFilter
+			]=await $arcgis.import([
+				"@arcgis/core/widgets/Search/SearchSource.js",
+				"@arcgis/core/Graphic.js",
+				"@arcgis/core/layers/support/FeatureFilter.js"
+			]);
+
+			// ---- Page + header refs
+			const parcelViewerTabBtn=document.getElementById("parcelViewerTab");
+			const publicWorksTabBtn=document.getElementById("publicWorksTab");
+			const specialAssessTabBtn=document.getElementById("specialAssessTab");
+
+			const pageParcel=document.getElementById("page-parcel");
+			const pagePW=document.getElementById("page-pw");
+			const pageSA=document.getElementById("page-sa");
+
+			const searchEl=document.getElementById("search");
+
+			const viewToggleFab=document.getElementById("viewToggleFab");
+			const viewToggleFabIcon=document.getElementById("viewToggleFabIcon");
+
+			// ---- Parcel view elements
+			const sceneEl=document.getElementById("scene");
+			const mapEl=document.getElementById("map2d");
+
+			await sceneEl.viewOnReady();
+			await mapEl.viewOnReady();
+
+			const sceneView=sceneEl.view;
+			const mapView=mapEl.view;
+			let ESRILayer=null;
+
+
+			// Start in 3D
+			let activeView=mapView;
+
+			function showAndHide(showEl,hideEl)
+			{
+				showEl.classList.add("visible");
+				hideEl.classList.remove("visible");
+			}
+
+			function updateFabIcon()
+			{
+				// show current mode
+				viewToggleFabIcon.setAttribute("icon",activeView===sceneView? "3d-glasses":"globe");
+				viewToggleFab.title=activeView===sceneView? "3D (click for 2D)":"2D (click for 3D)";
+			}
+			updateFabIcon();
+
+			// ---- Tab active styling
+			const tabButtons=[parcelViewerTabBtn,publicWorksTabBtn,specialAssessTabBtn].filter(Boolean);
+			function setActivePageTab(btn)
+			{
+				tabButtons.forEach(b =>
+				{
+					const on=(b===btn);
+					b.classList.toggle("active",on);
+					b.setAttribute("aria-selected",on? "true":"false");
+				});
+			}
+
+			// ---- Lazy-load PW/SA maps (hidden containers start at 0x0)
+			let pwLoaded=false;
+			let saLoaded=false;
+
+			async function ensureMapLoaded(mapId,flagName)
+			{
+				const el=document.getElementById(mapId);
+				if(!el) return;
+
+				if(flagName==="pw"&&pwLoaded) return;
+				if(flagName==="sa"&&saLoaded) return;
+
+				await el.viewOnReady();
+				// resize after it becomes visible
+				el.view?.resize?.();
+
+				if(flagName==="pw") pwLoaded=true;
+				if(flagName==="sa") saLoaded=true;
+			}
+
+			// ---- Page switching
+			let currentPage="parcel"; // parcel | pw | sa
+			async function switchPage(pageName)
+			{
+				currentPage=pageName;
+
+				pageParcel.classList.toggle("visible",pageName==="parcel");
+				pagePW.classList.toggle("visible",pageName==="pw");
+				pageSA.classList.toggle("visible",pageName==="sa");
+
+				// Search only on Parcel Viewer
+				//searchEl.style.display=(pageName==="parcel")? "":"none";
+
+				// Tab highlight
+				if(pageName==="parcel") setActivePageTab(parcelViewerTabBtn);
+				if(pageName==="pw") setActivePageTab(publicWorksTabBtn);
+				if(pageName==="sa") setActivePageTab(specialAssessTabBtn);
+
+				// Lazy load external maps
+				if(pageName==="pw") await ensureMapLoaded("pwMap","pw");
+				if(pageName==="sa") await ensureMapLoaded("saMap","sa");
+
+				// When returning to parcel page, force resize so views render correctly
+				if(pageName==="parcel")
+				{
+					sceneView?.resize?.();
+					mapView?.resize?.();
+				}
+			}
+
+			parcelViewerTabBtn.addEventListener("click",async () => switchPage("parcel"));
+			publicWorksTabBtn.addEventListener("click",async () => switchPage("pw"));
+			specialAssessTabBtn.addEventListener("click",async () => switchPage("sa"));
+
+			// ---- 2D/3D toggle (FAB) ONLY for Parcel page
+			async function switchTo2D()
+			{
+				if(activeView===mapView) return;
+
+				const vp=activeView.viewpoint.clone();
+				const lat=vp.targetGeometry?.latitude;
+				const scaleFactor=(typeof lat==="number")? Math.cos((lat*Math.PI)/180):1;
+				vp.scale/=scaleFactor;
+
+				mapView.viewpoint=vp;
+				showAndHide(mapEl,sceneEl);
+
+				activeView=mapView;
+				updateFabIcon();
+				await refreshLayerRefs();
+			}
+
+			async function switchTo3D()
+			{
+				if(activeView===sceneView) return;
+
+				const vp=activeView.viewpoint.clone();
+				const lat=vp.targetGeometry?.latitude;
+				const scaleFactor=(typeof lat==="number")? Math.cos((lat*Math.PI)/180):1;
+				vp.scale*=scaleFactor;
+
+				sceneView.viewpoint=vp;
+				showAndHide(sceneEl,mapEl);
+
+				activeView=sceneView;
+				updateFabIcon();
+				await refreshLayerRefs();
+			}
+
+			viewToggleFab.addEventListener("click",async () =>
+			{
+				if(currentPage!=="parcel") return; // safety
+				if(activeView===sceneView) await switchTo2D();
+				else await switchTo3D();
+			});
+
+			// ---- DOM refs for parcel UI
+			const buildingListEl=document.getElementById("buildingList");
+			const floorListEl=document.getElementById("floorList");
+			const parcelListEl=document.getElementById("parcelList");
+			const buildingSearchEl=document.getElementById("buildingSearch");
+			const parcelSearchEl=document.getElementById("parcelSearch");
+
+			const selectedParcelContentEl=document.getElementById("selectedParcelContent");
+			const launchBtn=document.getElementById("launchSurveyButton");
+
+			// ---- State
+			const parcelListSelectedOIDs=new Set();
+			const highlightedParcels=new Map();
+			const selectedParcels=[];
+			let currentBuildingExtent=null;
+			let currentBuildingWhere=null;
+			let allFeaturesForBuilding=[];
+
+			// ---- Layers (stable)
+			let condoLayer=null;         // from 3D scene
+			let regularParcelLayer=null; // from 2D map
+			let parcelLayer=null;
+			let floorLayer=null;
+
+			// ---- LayerViews
+			let parcelLayerView=null;
+			let floorLayerView=null;
+
+			async function refreshLayerRefs()
+			{
+				condoLayer=sceneView.map?.allLayers?.find(l => l.title==="Parcel Condominiums")||null;
+				floorLayer=sceneView.map?.allLayers?.find(l => l.title==="Parcel Condominiums Floors")||null;
+				ESRILayer=sceneView.map?.allLayers?.find(l => l.title==="Esri 3D Buildings")||null;
+				regularParcelLayer=mapView.map?.allLayers?.find(l => l.title==="Parcels")||null;
+
+				if(condoLayer) await condoLayer.load();
+				if(floorLayer) await floorLayer.load();
+				if(regularParcelLayer) await regularParcelLayer.load();
+
+				parcelLayer=condoLayer;
+
+				try { parcelLayerView=condoLayer? await sceneView.whenLayerView(condoLayer):null; }
+				catch { parcelLayerView=null; }
+
+				try { floorLayerView=floorLayer? await sceneView.whenLayerView(floorLayer):null; }
+				catch { floorLayerView=null; }
+			}
+
+			// ---- Utility
+			function clearSelection(container)
+			{
+				if(!container) return;
+				container.querySelectorAll(".selected").forEach(el => el.classList.remove("selected"));
+			}
+
+			function clearSelectedParcels()
+			{
+				selectedParcels.length=0;
+				selectedParcelContentEl.innerHTML="";
+				document.getElementById("selectedParcelList").style.display="none";
+			}
+
+			function clearHighlightsAndSets()
+			{
+				highlightedParcels.forEach(handle => { try { handle.remove(); } catch { } });
+				highlightedParcels.clear();
+				parcelListSelectedOIDs.clear();
+			}
+
+			function restoreBuildingListVisibility()
+			{
+				const filter=(buildingSearchEl.value||"").toLowerCase();
+				Array.from(buildingListEl.children).forEach(el =>
+				{
+					el.classList.remove("selected");
+					const match=!filter||el.textContent.toLowerCase().includes(filter);
+					el.style.display=match? "":"none";
+				});
+			}
+
+			function updateSelectedPanel()
+			{
+				selectedParcelContentEl.innerHTML="";
+				selectedParcels.forEach(f =>
+				{
+					const name=f.attributes.Name;
+					const div=document.createElement("div");
+					div.className="selected-parcel-item";
+					div.innerHTML=`<span>${name}</span><button class="remove-button">✖</button>`;
+					div.querySelector(".remove-button").onclick=async () =>
+					{
+						const oid=f.attributes.OBJECTID;
+						const idx=selectedParcels.findIndex(x => x.attributes.OBJECTID===oid);
+						if(idx>=0) selectedParcels.splice(idx,1);
+
+						const handle=highlightedParcels.get(oid);
+						if(handle)
+						{
+							try { handle.remove(); } catch { }
+							highlightedParcels.delete(oid);
+						}
+
+						parcelListSelectedOIDs.delete(oid);
+						updateSelectedPanel();
+
+						if(selectedParcels.length===0)
+						{
+							document.getElementById("selectedParcelList").style.display="none";
+						}
+					};
+					selectedParcelContentEl.appendChild(div);
+				});
+			}
+
+			async function toggleParcelSelection(feature)
+			{
+				const oid=feature.attributes?.OBJECTID;
+				if(!oid) return;
+
+				document.getElementById("selectedParcelList").style.display="block";
+
+				const alreadySelected=selectedParcels.some(f => f.attributes.OBJECTID===oid);
+
+				if(alreadySelected)
+				{
+					selectedParcels.splice(selectedParcels.findIndex(f => f.attributes.OBJECTID===oid),1);
+
+					const handle=highlightedParcels.get(oid);
+					if(handle)
+					{
+						try { handle.remove(); } catch { }
+						highlightedParcels.delete(oid);
+					}
+
+					parcelListSelectedOIDs.delete(oid);
+				} else
+				{
+					selectedParcels.push(feature);
+
+					// highlight on Floors layer view (your chosen behavior)
+					if(floorLayerView)
+					{
+						const handle=floorLayerView.highlight([oid]);
+						highlightedParcels.set(oid,handle);
+					}
+				}
+
+				updateSelectedPanel();
+			}
+
+			// ---- Building list (3D-only source)
+			async function populateBuildingList()
+			{
+				if(!condoLayer)
+				{
+					buildingListEl.innerHTML="<div style='opacity:.7;font-size:12px;'>No condo layer in 3D scene.</div>";
+					return;
+				}
+
+				const res=await condoLayer.queryFeatures({
+					where: "CartogNote IS NOT NULL",
+					outFields: ["CartogNote"],
+					returnDistinctValues: true,
+					returnGeometry: false
+				});
+
+				const buildings=res.features
+					.map(f => f.attributes.CartogNote)
+					.filter(Boolean)
+					.sort();
+
+				buildingListEl.innerHTML="";
+
+				buildings.forEach(b =>
+				{
+					const button=document.createElement("div");
+					button.className="building-list-item";
+					button.textContent=b;
+					button.onclick=() => handleBuildingSelection(b,button);
+					buildingListEl.appendChild(button);
+				});
+
+				if(!buildingSearchEl.dataset.wired)
+				{
+					buildingSearchEl.dataset.wired="true";
+					buildingSearchEl.addEventListener("input",e =>
+					{
+						const filter=e.target.value.toLowerCase();
+						Array.from(buildingListEl.children).forEach(div =>
+						{
+							const match=div.textContent.toLowerCase().includes(filter);
+							div.style.display=match? "":"none";
+						});
+					});
+				}
+			}
+
+			async function renderFloorsForBuilding(features)
+			{
+				floorListEl.innerHTML="";
+
+				const floors=[...new Set(features.map(f => f.attributes.FloorNameDesignator))]
+					.filter(f => f!=null)
+					.sort((a,b) => Number(a)-Number(b));
+
+				const group=document.createElement("calcite-chip-group");
+				group.selectionMode="multiple";
+				group.label="Floors";
+				floorListEl.appendChild(group);
+
+				floors.forEach(fl =>
+				{
+					const chip=document.createElement("calcite-chip");
+					chip.textContent=fl;
+					chip.dataset.floor=fl;
+
+					chip.addEventListener("click",() =>
+					{
+						chip.classList.toggle("selected");
+						handleFloorSelection();
+					});
+
+					group.appendChild(chip);
+				});
+
+				document.getElementById("floorPanel").style.display="block";
+			}
+
+			async function applyFloorFilter(floorNums)
+			{
+				console.log("🏢➡️🏢 Applying Floor Filter:",floorNums);
+
+				if(!currentBuildingWhere)
+				{
+					console.warn("No building filter set. Select a building first.");
+					return;
+				}
+				if(!Array.isArray(floorNums)) floorNums=[floorNums];
+				if(ESRILayer) ESRILayer.visible=false;
+				if(parcelLayer) parcelLayer.visible=true;
+
+				const floorWhere_FloorsLayer=floorNums.length
+					? floorNums.map(fn => `FloorNameDesignator = '${fn}'`).join(" OR ")
+					:"1=1";
+
+				const floorWhere_ParcelsLayer=floorNums.length
+					? floorNums.map(fn => `FloorNameDesignator <> '${fn}'`).join(" AND ")
+					:"1=1";
+
+				const combinedFloorsWhere=`${currentBuildingWhere} AND (${floorWhere_FloorsLayer})`;
+				const combinedParcelsWhere=`${currentBuildingWhere} AND (${floorWhere_ParcelsLayer})`;
+
+				if(floorLayer)
+				{
+					try
+					{
+						const lvFloors=await sceneView.whenLayerView(floorLayer);
+						lvFloors.filter=new FeatureFilter({ where: combinedFloorsWhere });
+						console.log("✔ Floors WHERE:",combinedFloorsWhere);
+					} catch(err)
+					{
+						console.warn("Floor layer filter failed:",err);
+					}
+				}
+
+				if(condoLayer)
+				{
+					try
+					{
+						const lvParcels=await sceneView.whenLayerView(condoLayer);
+						lvParcels.filter=new FeatureFilter({ where: combinedParcelsWhere });
+						console.log("✔ Parcels WHERE:",combinedParcelsWhere);
+					} catch(err)
+					{
+						console.warn("Parcel layer filter failed:",err);
+					}
+				}
+
+				console.log("🏁 Floor filter finished.");
+			}
+
+			// ---- Building selection (forces 3D + zoom)
+			async function handleBuildingSelection(cartogNote,div)
+			{
+				await switchTo3D();
+
+				if(!condoLayer)
+				{
+					alert("Condo layer not found in 3D scene.");
+					return;
+				}
+
+				if(floorLayer) floorLayer.visible=true;
+				if(ESRILayer) ESRILayer.visible=false;
+				if(parcelLayer) parcelLayer.visible=false;
+				// same building clicked again => reset
+				const isAlreadySelected=div.classList.contains("selected");
+				if(isAlreadySelected)
+				{
+					restoreBuildingListVisibility();
+					floorListEl.innerHTML="";
+					parcelListEl.innerHTML="";
+					document.getElementById("floorPanel").style.display="none";
+					document.getElementById("parcelPanel").style.display="none";
+
+					currentBuildingExtent=null;
+					allFeaturesForBuilding=[];
+					currentBuildingWhere=null;
+
+					try
+					{
+						if(condoLayer) (await sceneView.whenLayerView(condoLayer)).filter=null;
+						if(floorLayer) (await sceneView.whenLayerView(floorLayer)).filter=null;
+					} catch { }
+
+					sceneView.graphics.removeAll();
+					clearHighlightsAndSets();
+					clearSelectedParcels();
+					return;
+				}
+
+				// collapse list to just this building
+				Array.from(buildingListEl.children).forEach(el => (el.style.display=(el===div? "":"none")));
+
+				clearSelection(buildingListEl);
+				div.classList.add("selected");
+
+				clearSelection(floorListEl);
+				clearSelection(parcelListEl);
+
+				clearHighlightsAndSets();
+				clearSelectedParcels();
+
+				floorListEl.innerHTML="";
+				parcelListEl.innerHTML="";
+				document.getElementById("parcelPanel").style.display="none";
+
+				const safeCartog=cartogNote.replace(/'/g,"''");
+				currentBuildingWhere=`CartogNote = '${safeCartog}'`;
+
+				const res=await condoLayer.queryFeatures({
+					where: currentBuildingWhere,
+					outFields: ["*"],
+					returnGeometry: true
+				});
+
+				allFeaturesForBuilding=res.features||[];
+				if(!allFeaturesForBuilding.length)
+				{
+					alert("No features found for building.");
+					return;
+				}
+
+				// union extent
+				const parcelExtent=allFeaturesForBuilding.reduce((acc,f) =>
+				{
+					if(!f.geometry) return acc;
+					const ex=f.geometry.extent;
+					return acc? acc.union(ex):ex.clone();
+				},null);
+
+				currentBuildingExtent=parcelExtent;
+
+				if(parcelExtent)
+				{
+					// your height-aware framing kept
+					const floors=allFeaturesForBuilding
+						.map(f => Number(f.attributes.FloorNameDesignator))
+						.filter(f => !isNaN(f));
+					const maxFloor=floors.length? Math.max(...floors):1;
+					const buildingHeight=maxFloor*10;
+
+					const footprintSize=Math.max(parcelExtent.width,parcelExtent.height);
+					const heightRatio=buildingHeight/(footprintSize||1);
+
+					let expandMultiplier=3.6;
+					if(heightRatio>1) expandMultiplier+=heightRatio*0.5;
+
+					const expanded=parcelExtent.expand(expandMultiplier);
+
+					await sceneView.goTo({ target: expanded,tilt: 70 },{ easing: "in-out-cubic" });
+				}
+
+				// apply building filter
+				if(condoLayer)
+				{
+					const lvCondo=await sceneView.whenLayerView(condoLayer);
+					lvCondo.filter=new FeatureFilter({ where: currentBuildingWhere });
+				}
+				if(floorLayer)
+				{
+					const lvFloors=await sceneView.whenLayerView(floorLayer);
+					lvFloors.filter=new FeatureFilter({ where: currentBuildingWhere });
+				}
+
+				await renderFloorsForBuilding(allFeaturesForBuilding);
+				document.getElementById("floorPanel").style.display="block";
+			}
+
+			async function handleFloorSelection()
+			{
+				document.getElementById("parcelPanel").style.display="block";
+				parcelListEl.innerHTML="";
+
+				const selectedFloorNums=Array.from(
+					floorListEl.querySelectorAll("calcite-chip.selected")
+				).map(chip => chip.dataset.floor);
+
+				if(!selectedFloorNums.length)
+				{
+					await applyFloorFilter([]);
+					document.getElementById("parcelPanel").style.display="none";
+					return;
+				}
+
+				selectedFloorNums.forEach(fn =>
+				{
+					const headerDiv=document.createElement("div");
+					headerDiv.style.margin="8px 0 4px";
+					headerDiv.style.fontWeight="bold";
+					headerDiv.style.color="#fff";
+					headerDiv.textContent="Floor "+fn;
+					parcelListEl.appendChild(headerDiv);
+
+					const parcels=allFeaturesForBuilding.filter(f => f.attributes.FloorNameDesignator==fn);
+
+					parcels.forEach(p =>
+					{
+						const divP=document.createElement("div");
+						divP.className="parcel-list-item";
+						divP.textContent=p.attributes.Name;
+						divP.dataset.name=p.attributes.Name;
+
+						divP.onclick=async () =>
+						{
+							const oid=p.attributes.OBJECTID;
+							parcelListSelectedOIDs.add(oid);
+							divP.classList.add("selected");
+
+							if(!p?.geometry)
+							{
+								alert("❌ Parcel geometry missing");
+								return;
+							}
+
+							await activeView.goTo({ target: p.geometry.extent.expand(20),tilt: sceneView.camera.tilt });
+							await toggleParcelSelection(p);
+						};
+
+						parcelListEl.appendChild(divP);
+					});
+				});
+
+				await applyFloorFilter(selectedFloorNums);
+
+				parcelSearchEl.value="";
+				parcelSearchEl.oninput=() =>
+				{
+					const filter=parcelSearchEl.value.toLowerCase();
+					Array.from(parcelListEl.querySelectorAll(".parcel-list-item")).forEach(child =>
+					{
+						child.style.display=child.textContent.toLowerCase().includes(filter)? "":"none";
+					});
+				};
+			}
+
+			// ---- Click selection on active view (still checks condo layer)
+			function attachViewClickHandler(v)
+			{
+				v.on("click",async (event) =>
+				{
+					const hit=await v.hitTest(event);
+					const result=hit.results.find(r => r.graphic?.layer&&parcelLayer&&(r.graphic.layer===parcelLayer));
+					if(!result) return;
+
+					const feature=result.graphic;
+					const oid=feature.attributes?.OBJECTID;
+					if(!oid) return;
+
+					await toggleParcelSelection(feature);
+				});
+			}
+			attachViewClickHandler(sceneView);
+			attachViewClickHandler(mapView);
+
+			// ---- Search sources (two pathways)  (unchanged logic)
+			const condoSearchSource=new SearchSource({
+				name: "Condominiums",
+				placeholder: "Search Condo Parcel (Name)",
+				getSuggestions: async (params) =>
+				{
+					if(!condoLayer) return [];
+					const term=(params.suggestTerm||"").replace(/'/g,"''");
+
+					const res=await condoLayer.queryFeatures({
+						where: `UPPER(Name) LIKE UPPER('%${term}%')`,
+						outFields: ["OBJECTID","Name"],
+						returnGeometry: false
+					});
+
+					return res.features.map(f => ({
+						key: f.attributes.OBJECTID,
+						text: f.attributes.Name,
+						sourceIndex: params.sourceIndex
+					}));
+				},
+				getResults: async (params) =>
+				{
+					if(!condoLayer) return [];
+					const oid=params?.suggestResult?.key;
+					if(oid==null) return [];
+
+					const res=await condoLayer.queryFeatures({
+						where: `OBJECTID = ${oid}`,
+						outFields: ["*"],
+						returnGeometry: true
+					});
+
+					return res.features.map(f => ({
+						name: f.attributes.Name,
+						feature: f,
+						isCondo: true
+					}));
+				}
+			});
+
+			const regularSearchSource=new SearchSource({
+				name: "Parcels",
+				placeholder: "Search Regular Parcel (Name)",
+				getSuggestions: async (params) =>
+				{
+					if(!regularParcelLayer) return [];
+					const term=(params.suggestTerm||"").replace(/'/g,"''");
+
+					const res=await regularParcelLayer.queryFeatures({
+						where: `UPPER(Name) LIKE UPPER('%${term}%')`,
+						outFields: ["OBJECTID","Name"],
+						returnGeometry: false
+					});
+
+					return res.features.map(f => ({
+						key: f.attributes.OBJECTID,
+						text: f.attributes.Name,
+						sourceIndex: params.sourceIndex
+					}));
+				},
+				getResults: async (params) =>
+				{
+					if(!regularParcelLayer) return [];
+					const oid=params?.suggestResult?.key;
+					if(oid==null) return [];
+
+					const res=await regularParcelLayer.queryFeatures({
+						where: `OBJECTID = ${oid}`,
+						outFields: ["*"],
+						returnGeometry: true
+					});
+
+					return res.features.map(f => ({
+						name: f.attributes.Name,
+						feature: f,
+						isCondo: false
+					}));
+				}
+			});
+
+			searchEl.sources=[condoSearchSource,regularSearchSource];
+
+			searchEl.addEventListener("arcgisSearchComplete",async (evt) =>
+			{
+				if(currentPage!=="parcel") return;
+
+				const result=evt.detail?.results?.[0]?.results?.[0];
+				if(!result) return;
+
+				const feature=result.feature;
+				const isCondo=result.isCondo;
+
+				if(isCondo)
+				{
+					await switchTo3D();
+
+					await sceneView.goTo({
+						target: feature.geometry.extent.expand(2),
+						tilt: 75
+					});
+
+					const buildingName=feature.attributes?.CartogNote;
+					if(buildingName)
+					{
+						const buildingDiv=Array.from(buildingListEl.children)
+							.find(d => d.textContent===buildingName);
+
+						if(buildingDiv)
+						{
+							await handleBuildingSelection(buildingName,buildingDiv);
+						}
+					}
+				} else
+				{
+					await switchTo2D();
+
+					mapView.graphics.removeAll();
+					mapView.graphics.add(new Graphic({
+						geometry: feature.geometry,
+						symbol: {
+							type: "simple-fill",
+							color: [0,255,255,0.35],
+							outline: { color: [0,255,255],width: 2 }
+						}
+					}));
+
+					await mapView.goTo({ target: feature.geometry.extent.expand(2) });
+				}
+			});
+
+			launchBtn.onclick=() =>
+			{
+				if(selectedParcels.length===0)
+				{
+					alert("Please select at least one parcel.");
+					return;
+				}
+				alert("Selected parcels count: "+selectedParcels.length);
+			};
+
+			// ---- Init
+			await refreshLayerRefs();
+			await populateBuildingList();
+			await switchPage("parcel"); // ensure correct initial state
+			preloader.style.display="none";
+
+		} catch(err)
+		{
+			console.error(err);
+			preloader.textContent="Error loading app (see console).";
+		}
+	</script>
+</body>
+</html>
