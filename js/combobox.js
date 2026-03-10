@@ -1,4 +1,3 @@
-// combobox.js
 export async function populateComboboxGroup({ map, layerTitle, fieldName, groupId, valuePrefix }) {
   const layer = map.allLayers.find(l => l.title === layerTitle);
   if (!layer) {
