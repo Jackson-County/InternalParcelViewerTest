@@ -66,6 +66,7 @@
 			font-size: 12px;
 			border-top: 3px solid var(--accent-color);
 			z-index: 2;
+			display: flex;
 		}
 
 		#preloader {
@@ -113,6 +114,7 @@
 			border-right: 3px solid #122f57;
 			overflow: hidden;
 			z-index: 10;
+			
 		}
 
 		.panel {
@@ -140,7 +142,7 @@
 			color: white;
 		}
 
-		#buildingList, #floorList, #parcelList {
+		#buildingList, #floorList, #parcelList, #taxList {
 			max-height: 80vh;
 			overflow-y: auto;
 			overflow-x: clip;
@@ -377,8 +379,8 @@
 			.view-toggle-fab:active {
 				transform: scale(0.94);
 			}
-		/* Apply to all 3 lists */
-		#buildingList, #floorList, #parcelList {
+		/* Apply to all 4 lists */
+		#buildingList, #floorList, #parcelList, #taxList {
 			scrollbar-gutter: stable;
 			overscroll-behavior: contain;
 			scroll-behavior: smooth;
@@ -387,13 +389,15 @@
 			/* Chrome / Edge / Safari */
 			#buildingList::-webkit-scrollbar,
 			#floorList::-webkit-scrollbar,
-			#parcelList::-webkit-scrollbar {
+			#parcelList::-webkit-scrollbar,
+			#taxList::-webkit-scrollbar {
 				width: 10px;
 			}
 
 			#buildingList::-webkit-scrollbar-track,
 			#floorList::-webkit-scrollbar-track,
-			#parcelList::-webkit-scrollbar-track {
+			#parcelList::-webkit-scrollbar-track,
+			#taxList::-webkit-scrollbar-track {
 				background: rgba(0,0,0,0.18);
 				border-left: 1px solid rgba(28,92,255,0.15);
 				border-radius: 999px;
@@ -401,7 +405,8 @@
 
 			#buildingList::-webkit-scrollbar-thumb,
 			#floorList::-webkit-scrollbar-thumb,
-			#parcelList::-webkit-scrollbar-thumb {
+			#parcelList::-webkit-scrollbar-thumb,
+			#taxList::-webkit-scrollbar-thumb {
 				background: linear-gradient(180deg, rgba(28,92,255,0.95), rgba(118,202,251,0.85) );
 				border-radius: 999px;
 				border: 2px solid rgba(10,30,58,0.85);
@@ -410,12 +415,13 @@
 
 				#buildingList::-webkit-scrollbar-thumb:hover,
 				#floorList::-webkit-scrollbar-thumb:hover,
-				#parcelList::-webkit-scrollbar-thumb:hover {
+				#parcelList::-webkit-scrollbar-thumb:hover,
+				#taxList::-webkit-scrollbar-thumb:hover {
 					box-shadow: 0 0 16px rgba(28,92,255,0.85);
 				}
 
 		/* Firefox */
-		#buildingList, #floorList, #parcelList {
+		#buildingList, #floorList, #parcelList, #taxList {
 			scrollbar-width: thin;
 			scrollbar-color: rgba(28,92,255,0.95) rgba(0,0,0,0.18);
 		}
@@ -572,9 +578,9 @@
 						<calcite-combobox-item-group id="tifplan-names" label="TIF Plan District"></calcite-combobox-item-group>
 				</div>
 
-				<div id="selectionPanel" class="panel">
-					<h4>Selected Districts</h4>
-					<div id="selectionList"></div>
+				<div id="taxPanel" class="panel">
+					<h3>Selected Districts</h3>
+					<div id="taxList"></div>
 				</div>
 
 				<div id="parcelPanel" class="panel" style="display:none;">
