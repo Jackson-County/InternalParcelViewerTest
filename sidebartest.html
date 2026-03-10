@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>2D Map Template with Shell Header/Footer</title>
+
+<script type="module" src="https://js.arcgis.com/5.0/"></script>
+
+<style>
+html, body, calcite-shell {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  font-family: "Segoe UI", sans-serif;
+  background: #1a2b55;
+  color: #ecf0f1;
+}
+
+header, footer {
+  font-family: "Segoe UI", sans-serif;
+}
+
+#main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.map-panel {
+  flex: 1 1 80%;
+  min-height: 0;
+}
+
+.table-container {
+  height: 100%;
+  overflow: hidden;
+}
+
+.sidebar-content {
+  padding: 12px;
+}
+
+.header-content {
+  background: #0a1e3a;
+  color: #fff;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 10px;
+  font-weight: 600;
+  z-index: 2;
+  border-bottom: 3px solid var(--accent-color);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.header-content img {
+  height: 32px;
+}
+
+.header-content h2 {
+  margin: 0;
+  font-size: 1.4em;
+  white-space: nowrap;
+}
+
+.header-icon-btn {
+  background: #0e203a;
+  border: 1px solid #1c5cff55;
+  color: white;
+  height: 38px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-left: 12px;
+  transition: 0.15s ease;
+  box-shadow: 0 0 4px #00000066;
+}
+
+.header-icon-btn:hover {
+  background: #1c5cff22;
+  border-color: #1c5cffcc;
+  box-shadow: 0 0 10px #1c5cffaa;
+}
+
+.header-icon-btn:active {
+  transform: scale(0.92);
+}
+.footer-content {
+  height: 28px;
+  background-color: #0a1e3a;
+  color: #eee;
+  text-align: center;
+  line-height: 28px;
+  font-size: 12px;
+  border-top: 3px solid var(--accent-color);
+  z-index: 2;
+  display: flex; /* optional, for centering the text+icon */
+  align-items: center; /* vertical alignment */
+  justify-content: center; /* horizontal centering */
+  gap: 4px; /* small gap between text and icon */
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- ===================== -->
+<!-- CALCITE SHELL WRAPPER -->
+<!-- ===================== -->
+<calcite-shell>
+
+<header slot="header">
+  <!-- Wrap all header elements in a div -->
+  <div class="header-content">
+    <img src="https://jcgis.jacksongov.org/images/largelogo.png" alt="Logo">
+    <h2>Map Viewer Template</h2>
+    <arcgis-search id="search" include-default-sources-disabled=""></arcgis-search>
+    <button id="functionsButton" class="header-icon-btn" title="Functions">
+      <calcite-icon icon="app-gear" scale="m"></calcite-icon>Functions
+    </button>
+  </div>
+</header>
+
+  <!-- LEFT SIDEBAR -->
+  <calcite-shell-panel
+    id="sidebar"
+    slot="panel-start"
+    collapsible
+    width-scale="m">
+
+    <!-- VERTICAL ACTION BAR FOR COLLAPSING -->
+    <calcite-action-bar slot="action-bar" layout="vertical">
+      <calcite-action
+        id="collapseAction"
+        icon="chevrons-left"
+        text-enabled>
+      </calcite-action>
+    </calcite-action-bar>
+
+    <!-- SPECIAL TAX DISTRICTS PANEL -->
+    <calcite-panel heading="Special Tax Districts">
+      <div class="sidebar-content">
+        <calcite-combobox
+          id="fieldBox"
+          placeholder="Select a field"
+          select-all-enabled
+          selection-display="single">
+
+          <calcite-combobox-item
+            value="select-all-cid"
+            heading="Select all CID"
+            data-target-group="cid-names">
+          </calcite-combobox-item>
+
+          <calcite-combobox-item
+            value="select-all-tdd"
+            heading="Select all TDD"
+            data-target-group="tdd-names">
+          </calcite-combobox-item>
+
+          <calcite-combobox-item
+            value="select-all-tifproj"
+            heading="Select all TIF Projects"
+            data-target-group="tifproj-names">
+          </calcite-combobox-item>
+
+          <calcite-combobox-item
+            value="select-all-tifplan"
+            heading="Select all TIF Plan Districts"
+            data-target-group="tifplan-names">
+          </calcite-combobox-item>
+
+          <calcite-combobox-item-group id="cid-names" label="CID"></calcite-combobox-item-group>
+          <calcite-combobox-item-group id="tdd-names" label="TDD"></calcite-combobox-item-group>
+          <calcite-combobox-item-group id="tifproj-names" label="TIF Projects"></calcite-combobox-item-group>
+          <calcite-combobox-item-group id="tifplan-names" label="TIF Plan District"></calcite-combobox-item-group>
+
+        </calcite-combobox>
+
+        <div id="districtselection" class="panel">
+          <h4>Selected Districts</h4>
+          <div id="taxList"></div>
+        </div>
+      </div>
+    </calcite-panel>
+
+  </calcite-shell-panel>
+
+  <!-- MAIN CONTENT -->
+  <div id="main-content">
+    <calcite-panel class="map-panel">
+      <arcgis-map
+        id="saMap"
+        item-id="715b4ef93362498e97db7393dc2b7d17">
+        <arcgis-layer-list slot="top-right"></arcgis-layer-list>
+      </arcgis-map>
+    </calcite-panel>
+  </div>
+
+  <!-- SHELL FOOTER -->
+  <footer slot="footer">
+    <div class="footer-content">
+      &copy; 2025 - Jackson County Missouri GIS
+      <img src="https://jcgis.jacksongov.org/images/Icons/globe-glow.svg"
+          alt="Globe Icon"
+          style="width:20px;height:20px;vertical-align:text-bottom;margin-left:1px;filter:invert(70%);">
+    </div>
+  </footer>
+
+</calcite-shell>
+
+<script>
+// Sidebar collapse toggle
+const sidebar = document.getElementById("sidebar");
+const collapseAction = document.getElementById("collapseAction");
+
+collapseAction.addEventListener("click", () => {
+  sidebar.collapsed = !sidebar.collapsed;
+  collapseAction.icon = sidebar.collapsed ? "chevrons-right" : "chevrons-left";
+});
+</script>
+
+</body>
+</html>
