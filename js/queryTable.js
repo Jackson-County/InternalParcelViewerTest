@@ -39,59 +39,56 @@ export function attachQueryTableListener(combobox, featureTable, parcelLayer, vi
 
   let layerViewPromise = view.whenLayerView(parcelLayer);
 
-  combobox.addEventListener("calciteComboboxChange", async () => {
+combobox.addEventListener("calciteComboboxChange", async () => {
 
-    const layerView = await layerViewPromise;
+  const layerView = await layerViewPromise;
+  const otherLayers = view.map.layers.filter(l => l.id !== parcelLayer.id);
 
-    if (!hasActiveSelection(combobox)) {
+  if (!hasActiveSelection(combobox)) {
+    featureTable.highlightIds.removeAll();
+    featureTable._allSelectedObjectIds = [];
+    featureTable.definitionExpression = "1=1";
 
-      featureTable.highlightIds.removeAll();
-      featureTable._allSelectedObjectIds = [];
-      featureTable.definitionExpression = "1=1";
+    // Reset parcel layer filter
+    layerView.filter = null;
 
-      layerView.filter = null;
+    // Restore other layers
+    otherLayers.forEach(l => l.visible = true);
 
-      return;
+    return;
+  }
+
+  const whereClause = buildComboboxWhereClause(combobox);
+  featureTable.definitionExpression = whereClause;
+
+  try {
+    const query = parcelLayer.createQuery();
+    query.where = whereClause;
+    query.returnGeometry = false;
+
+    const allObjectIds = await parcelLayer.queryObjectIds(query);
+
+    featureTable.highlightIds.removeAll();
+    const visibleIds = allObjectIds.slice(0, parcelLayer.maxRecordCount);
+    featureTable.highlightIds.addMany(visibleIds);
+    featureTable._allSelectedObjectIds = allObjectIds;
+
+    // Map filter
+    layerView.filter = { where: whereClause };
+
+    // Hide other layers while selection is active
+    otherLayers.forEach(l => l.visible = false);
+
+    // Zoom to selected parcels
+    const extentQuery = parcelLayer.createQuery();
+    extentQuery.where = whereClause;
+    const result = await parcelLayer.queryExtent(extentQuery);
+    if (result.extent) {
+      view.goTo(result.extent.expand(1.2));
     }
 
-    const whereClause = buildComboboxWhereClause(combobox);
-
-    featureTable.definitionExpression = whereClause;
-
-    try {
-
-      const query = parcelLayer.createQuery();
-      query.where = whereClause;
-      query.returnGeometry = false;
-
-      const allObjectIds = await parcelLayer.queryObjectIds(query);
-
-      featureTable.highlightIds.removeAll();
-
-      const visibleIds = allObjectIds.slice(0, parcelLayer.maxRecordCount);
-      featureTable.highlightIds.addMany(visibleIds);
-
-      featureTable._allSelectedObjectIds = allObjectIds;
-
-      /* ---------- MAP FILTER ---------- */
-
-      layerView.filter = {
-        where: whereClause
-      };
-
-      /* ---------- ZOOM TO FEATURES ---------- */
-
-      const extentQuery = parcelLayer.createQuery();
-      extentQuery.where = whereClause;
-
-      const result = await parcelLayer.queryExtent(extentQuery);
-
-      if (result.extent) {
-        view.goTo(result.extent.expand(1.2));
-      }
-
-    } catch (err) {
-      console.error("Failed to select features:", err);
-    }
-  });
+  } catch (err) {
+    console.error("Failed to select features:", err);
+  }
+});
 }
