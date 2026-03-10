@@ -205,12 +205,25 @@
 
 		/* view containers */
 		.page-view {
-			flex: 1 1 auto;
-			position: relative;
-			overflow: hidden;
-			min-width: 0;
+		flex: 1 1 auto;
+		position: relative;
+		min-width: 0;
+
+		display: flex;
+		flex-direction: column;
+		}
+		/* flexible map an table elements*/
+		/* map fills available space */
+		#saMap {
+		flex: 1 1 auto;
+		min-height: 0;
 		}
 
+		/* table stays at bottom */
+		.table-container {
+		flex: 0 0 250px;
+		border-top: 1px solid #ccc;
+		}
 		/* stack map + scene on top of each other */
 		.view-element {
 			position: absolute;
@@ -226,6 +239,7 @@
 			visibility: visible;
 			pointer-events: auto;
 		}
+
 
 		/* Selected parcels floating panel */
 		#selectedParcelList {
@@ -591,9 +605,14 @@
 			</div>
 
 			<div id="taxView" class="page-view">
-				<arcgis-map id="saMap" class="view-element visible" item-id="715b4ef93362498e97db7393dc2b7d17">
+				<arcgis-map id="saMap" class="visible" item-id="715b4ef93362498e97db7393dc2b7d17">
 					<arcgis-layer-list slot="top-right"></arcgis-layer-list>
 				</arcgis-map>
+				<arcgis-feature-table
+					id="parcelsTable"
+					reference-element="saMap"
+					class="table-container">
+				</arcgis-feature-table>
 			</div>
 		</div>
 	</div>
