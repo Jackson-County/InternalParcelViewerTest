@@ -82,14 +82,19 @@
     <!-- MAP -->
     <calcite-panel class="map-panel">
       <arcgis-map
-        id="map"
+        id="saMap"
         item-id="715b4ef93362498e97db7393dc2b7d17">
         <arcgis-layer-list slot="top-right"></arcgis-layer-list>
       </arcgis-map>
     </calcite-panel>
 
-    <!-- TABLE -->
-      <div id="parcelsTable" class="table-container"></div>
+    <!-- TABLE
+      <div id="parcelsTable" class="table-container"></div> -->
+      <arcgis-feature-table
+        id="parcelsTable"
+        reference-element="saMap"
+        class="table-container">
+      </arcgis-feature-table>
 
   </div>
 
