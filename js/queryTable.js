@@ -35,17 +35,27 @@ function hasActiveSelection(combobox) {
   );
 }
 
-export function attachQueryTableListener(combobox, featureTable, parcelLayer) {
+export function attachQueryTableListener(combobox, featureTable, parcelLayer, view) {
+
+  let layerViewPromise = view.whenLayerView(parcelLayer);
+
   combobox.addEventListener("calciteComboboxChange", async () => {
 
+    const layerView = await layerViewPromise;
+
     if (!hasActiveSelection(combobox)) {
+
       featureTable.highlightIds.removeAll();
       featureTable._allSelectedObjectIds = [];
       featureTable.definitionExpression = "1=1";
+
+      layerView.filter = null;
+
       return;
     }
 
     const whereClause = buildComboboxWhereClause(combobox);
+
     featureTable.definitionExpression = whereClause;
 
     try {
@@ -62,6 +72,23 @@ export function attachQueryTableListener(combobox, featureTable, parcelLayer) {
       featureTable.highlightIds.addMany(visibleIds);
 
       featureTable._allSelectedObjectIds = allObjectIds;
+
+      /* ---------- MAP FILTER ---------- */
+
+      layerView.filter = {
+        where: whereClause
+      };
+
+      /* ---------- ZOOM TO FEATURES ---------- */
+
+      const extentQuery = parcelLayer.createQuery();
+      extentQuery.where = whereClause;
+
+      const result = await parcelLayer.queryExtent(extentQuery);
+
+      if (result.extent) {
+        view.goTo(result.extent.expand(1.2));
+      }
 
     } catch (err) {
       console.error("Failed to select features:", err);

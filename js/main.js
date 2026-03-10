@@ -50,6 +50,6 @@ import { attachQueryTableListener } from "./queryTable.js";
   const selectionList = document.getElementById("taxList");
   attachSelectAllLogic(combobox);
   attachSelectionListLogic(combobox, selectionList);
-  attachQueryTableListener(combobox, featureTable, parcelLayer);
+  attachQueryTableListener(combobox, featureTable, parcelLayer, view);
 
 })();
