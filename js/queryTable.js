@@ -15,7 +15,7 @@ export function buildComboboxWhereClause(combobox) {
     const parentGroup = item.closest("calcite-combobox-item-group");
     const groupKey = parentGroup?.label || parentGroup?.id || "Ungrouped";
     if (!groupedSelections[groupKey]) groupedSelections[groupKey] = [];
-    groupedSelections[groupKey].push(item.value.split(":")[1]);
+    groupedSelections[groupKey].push(item.value);
   });
 
   const clauses = [];
