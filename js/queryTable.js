@@ -41,13 +41,15 @@ export function attachQueryTableListener(combobox, featureTable, parcelLayer) {
     if (!hasActiveSelection(combobox)) {
       featureTable.highlightIds.removeAll();
       featureTable._allSelectedObjectIds = [];
+      featureTable.definitionExpression = "1=1";
       return;
     }
 
     const whereClause = buildComboboxWhereClause(combobox);
-    featureTable.viewModel.definitionExpression = whereClause;
+    featureTable.definitionExpression = whereClause;
 
     try {
+
       const query = parcelLayer.createQuery();
       query.where = whereClause;
       query.returnGeometry = false;

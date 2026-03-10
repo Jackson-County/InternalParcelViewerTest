@@ -24,14 +24,12 @@ import { attachQueryTableListener } from "./queryTable.js";
 
 
 (async function() {
-  const mapEl = document.getElementById("saMap");
-  const { map, view, parcelLayer } = await initMap(mapEl);
-
-  const featureTable = createFeatureTable({
+  const saMap = document.getElementById("saMap");
+  const { map, view, parcelLayer } = await initMap(saMap);
+  const featureTable = await createFeatureTable({
     view,
     layer: parcelLayer,
-    containerId: "parcelsTable",
-    FeatureTableClass: FeatureTable
+    containerId: "parcelsTable"
   });
 
   const searchEl = document.getElementById("search");
