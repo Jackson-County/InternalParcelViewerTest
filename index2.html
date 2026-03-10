@@ -116,7 +116,6 @@
 			z-index: 10;
 			
 		}
-
 		.panel {
 			background: #10294a;
 			padding: 10px;
@@ -131,7 +130,12 @@
 				border-bottom: 1px solid #2f6df2;
 				font-size: 15px;
 			}
-
+		#taxPanel {
+			display: flex;
+			flex-direction: column;
+			flex: 1 1 auto;
+			min-height: 0;
+		}
 		#buildingSearch, #parcelSearch {
 			width: 90%;
 			padding: 6px 8px;
@@ -556,6 +560,7 @@
 		<div id="page-sa" class="app-page">
 			<div id="left-sidebar">
 				<div id="selectionPanel" class="panel">
+					<h3>Select Districts</h3>
 					<calcite-combobox
 						id="fieldBox"
 						placeholder="Select a field"
@@ -593,14 +598,7 @@
 				</div>
 
 				<div id="taxPanel" class="panel">
-					<h3>Selected Districts</h3>
 					<div id="taxList"></div>
-				</div>
-
-				<div id="parcelPanel" class="panel" style="display:none;">
-					<h3>Parcels</h3>
-					<input type="text" id="parcelSearch" placeholder="Search parcels…" />
-					<div id="parcelList"></div>
 				</div>
 			</div>
 

@@ -69,10 +69,8 @@ export function attachSelectionListLogic(combobox, selectionList) {
     });
 
     Object.entries(groupedSelections).forEach(([groupName, items]) => {
-      const header = document.createElement("div");
+      const header = document.createElement("h3");
       header.textContent = groupName;
-      header.style.fontWeight = "bold";
-      header.style.marginTop = "5px";
       selectionList.appendChild(header);
 
       items.forEach(text => {
