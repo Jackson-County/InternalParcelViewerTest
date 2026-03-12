@@ -1,26 +1,40 @@
-export function createParcelSearch({ searchEl, parcelLayer, view, SearchSourceClass, GraphicClass }) {
-  const parcelSearchSource = new SearchSourceClass({
-    placeholder: "Search Parcels by Name",
+// searchParcels.js
+export async function createRegularParcelSearch({
+  searchEl,
+  regularParcelLayer,
+  mapView,
+  parcelsTable,
+  SearchSourceClass,
+  GraphicClass
+}) {
+  if (!regularParcelLayer) return;
+
+  // ---- Create the search source
+  const regularSearchSource = new SearchSourceClass({
+    name: "Parcels",
+    placeholder: "Search Parcel (Name)",
+
     getSuggestions: async (params) => {
-      const res = await parcelLayer.queryFeatures({
-        where: `UPPER(Name) LIKE UPPER('%${params.suggestTerm.replace(/'/g, "''")}%')`,
+      const term = (params.suggestTerm || "").replace(/'/g, "''");
+      const res = await regularParcelLayer.queryFeatures({
+        where: `UPPER(Name) LIKE UPPER('%${term}%')`,
         outFields: ["OBJECTID", "Name"],
         returnGeometry: false
       });
+
       return res.features.map(f => ({
         key: f.attributes.OBJECTID,
         text: f.attributes.Name,
         sourceIndex: params.sourceIndex
       }));
     },
-    getResults: async (params) => {
-      const where = params.suggestResult?.key
-        ? `OBJECTID = ${params.suggestResult.key}`
-        : `UPPER(Name) LIKE UPPER('%${params.searchTerm.replace(/'/g, "''")}%')`;
 
-      const res = await parcelLayer.queryFeatures({
-        where,
-        outFields: ["OBJECTID", "Name"],
+    getResults: async (params) => {
+      const oid = params?.suggestResult?.key;
+      if (oid == null) return [];
+      const res = await regularParcelLayer.queryFeatures({
+        where: `OBJECTID = ${oid}`,
+        outFields: ["*"],
         returnGeometry: true
       });
 
@@ -31,23 +45,29 @@ export function createParcelSearch({ searchEl, parcelLayer, view, SearchSourceCl
     }
   });
 
-  searchEl.sources = [parcelSearchSource];
+  searchEl.sources = [regularSearchSource];
 
+  // ---- Event listener for search completion
   searchEl.addEventListener("arcgisSearchComplete", async (evt) => {
     const result = evt.detail?.results?.[0]?.results?.[0];
     if (!result) return;
 
     const feature = result.feature;
-    view.graphics.removeAll();
-    view.graphics.add(new GraphicClass({
-      geometry: feature.geometry,
-      symbol: {
-        type: "simple-fill",
-        color: [0, 255, 255, 0.4],
-        outline: { color: [0, 255, 255], width: 2 }
-      }
-    }));
+    if (!feature) return;
 
-    await view.goTo(feature.geometry.extent.expand(2));
+   // Zoom to feature
+    await mapView.goTo({ target: feature.geometry.extent.expand(2) });
+
+    // Highlight on map
+    const layerView = await mapView.whenLayerView(regularParcelLayer);
+    layerView.highlight(feature);
+
+    // Filter table using definitionExpression
+    if (parcelsTable) {
+      await parcelsTable.componentOnReady();
+
+      // Use the Name field as the filter
+      parcelsTable.definitionExpression = `Name = '${feature.attributes.Name.replace(/'/g, "''")}'`;
+    }
   });
 }
