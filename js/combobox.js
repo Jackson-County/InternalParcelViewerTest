@@ -1,4 +1,3 @@
-// combobox.js
 export async function populateComboboxGroup({ map, layerTitle, fieldName, groupId, valuePrefix }) {
   const layer = map.allLayers.find(l => l.title === layerTitle);
   if (!layer) {
@@ -20,8 +19,8 @@ export async function populateComboboxGroup({ map, layerTitle, fieldName, groupI
   const groupEl = document.getElementById(groupId);
   values.forEach(value => {
     const item = document.createElement("calcite-combobox-item");
-    item.value = `${valuePrefix}:${value}`;
-    item.textLabel = value;
+    item.value = value;       // just '3 Trails'
+    item.textLabel = value;   // display in dropdown
     groupEl.appendChild(item);
   });
 }
@@ -66,14 +65,12 @@ export function attachSelectionListLogic(combobox, selectionList) {
       const parentGroup = item.closest("calcite-combobox-item-group");
       const groupKey = parentGroup?.label || parentGroup?.id || "Ungrouped";
       if (!groupedSelections[groupKey]) groupedSelections[groupKey] = [];
-      groupedSelections[groupKey].push(item.value.split(":")[1]);
+      groupedSelections[groupKey].push(item.value);
     });
 
     Object.entries(groupedSelections).forEach(([groupName, items]) => {
-      const header = document.createElement("div");
+      const header = document.createElement("h3");
       header.textContent = groupName;
-      header.style.fontWeight = "bold";
-      header.style.marginTop = "5px";
       selectionList.appendChild(header);
 
       items.forEach(text => {

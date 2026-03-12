@@ -1,4 +1,3 @@
-// Load ArcGIS classes once here
 const [
   Graphic,
   FeatureLayer,
@@ -23,16 +22,14 @@ import { createParcelSearch } from "./searchParcels.js";
 import { populateComboboxGroup, attachSelectAllLogic, attachSelectionListLogic } from "./combobox.js";
 import { attachQueryTableListener } from "./queryTable.js";
 
-(async function() {
-  const mapEl = document.getElementById("map");
-  const { map, view, parcelLayer } = await initMap(mapEl);
 
-  // Pass ArcGIS classes into your modules
-  const featureTable = createFeatureTable({
+(async function() {
+  const saMap = document.getElementById("saMap");
+  const { map, view, parcelLayer } = await initMap(saMap);
+  const featureTable = await createFeatureTable({
     view,
     layer: parcelLayer,
-    containerId: "parcelsTable",
-    FeatureTableClass: FeatureTable
+    containerId: "parcelsTable"
   });
 
   const searchEl = document.getElementById("search");
@@ -44,19 +41,15 @@ import { attachQueryTableListener } from "./queryTable.js";
     GraphicClass: Graphic
   });
 
-  // Combobox logic
   await populateComboboxGroup({ map, layerTitle: "CID", fieldName: "Name", groupId: "cid-names", valuePrefix: "CID" });
   await populateComboboxGroup({ map, layerTitle: "TDD", fieldName: "Name", groupId: "tdd-names", valuePrefix: "TDD" });
   await populateComboboxGroup({ map, layerTitle: "TIF Projects", fieldName: "Name", groupId: "tifproj-names", valuePrefix: "TIF_PROJECT" });
   await populateComboboxGroup({ map, layerTitle: "TIF Plan District", fieldName: "Name", groupId: "tifplan-names", valuePrefix: "TIF_PLAN" });
 
   const combobox = document.getElementById("fieldBox");
-  const selectionList = document.getElementById("selectionList");
+  const selectionList = document.getElementById("taxList");
   attachSelectAllLogic(combobox);
   attachSelectionListLogic(combobox, selectionList);
-  attachQueryTableListener(combobox, featureTable);
+  attachQueryTableListener(combobox, featureTable, parcelLayer, view);
 
-  const functionsButton = document.getElementById("functionsButton");
-  const functionsDialog = document.getElementById("functionsDialog");
-  functionsButton.addEventListener("click", () => { functionsDialog.open = true; });
 })();
