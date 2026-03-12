@@ -1,0 +1,146 @@
+html, body {
+height: 100%;
+margin: 0;
+background: #1a2b55;
+font-family: "Segoe UI", sans-serif;
+color: #ecf0f1;
+overflow: hidden;
+display: flex;
+flex-direction: column;
+}
+
+:root {
+--accent-color: #1c5cff;
+--select-button-color: #1c5cffcc;
+}
+
+header {
+background: #0a1e3a;
+color: #fff;
+height: 60px;
+display: flex;
+align-items: center;
+padding: 0 16px;
+gap: 10px;
+font-weight: 600;
+z-index: 2;
+border-bottom: 3px solid var(--accent-color);
+position: relative;
+}
+
+header img {
+height: 32px;
+}
+
+header h2 {
+margin: 0;
+font-size: 1.4em;
+white-space: nowrap;
+}
+
+.header-icon-btn {
+    background: #0e203a;
+    border: 1px solid #1c5cff55;
+    color: white;
+    height: 38px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin-left: 12px;
+    transition: 0.15s ease;
+    box-shadow: 0 0 4px #00000066;
+}
+
+.header-icon-btn:hover {
+    background: #1c5cff22;
+    border-color: #1c5cffcc;
+    box-shadow: 0 0 10px #1c5cffaa;
+}
+
+.header-icon-btn:active {
+    transform: scale(0.92);
+}
+
+#ui-container {
+display: flex;
+height: calc(100vh - 60px);
+width: 100%;
+overflow: hidden;
+}
+
+.list-item {
+display: block;
+width: 100%;
+background-color: #34495e;
+margin: 7px 0;
+padding: 2px 10px;
+border-radius: 6px;
+font-size: 13px;
+cursor: pointer;
+transition: background 0.2s ease;
+color: #ecf0f1;
+box-sizing: border-box;
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+position: relative;
+}
+
+#main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.map-panel {
+  flex: 1 1 80%;
+  min-height: 0;
+}
+
+.table-panel {
+  flex: 1 1 20%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.table-container {
+  height: 100%;
+  overflow: hidden;
+}
+
+#left-sidebar {
+    flex: 0 0 20%;
+}
+
+arcgis-map {
+flex: 1;
+height: 100%;
+width: 100%;
+background-color: #fff;
+}
+
+arcgis-layer-list {
+margin-top: 56px;
+}
+
+arcgis-search {
+position: absolute;
+right: 20px;
+top: 10px;
+z-index: 10;
+}
+
+footer {
+height: 28px;
+background-color: #0a1e3a;
+color: #eee;
+text-align: center;
+line-height: 28px;
+font-size: 12px;
+border-top: 3px solid var(--accent-color);
+z-index: 2;
+}

@@ -1,0 +1,527 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <title>2D Map Template (Map + Layer Table)</title>
+
+    <!-- Calcite + ArcGIS ESM -->
+    <script type="module" src="https://js.arcgis.com/calcite-components/3.3.3/calcite.esm.js"></script>
+    <link rel="stylesheet" href="https://js.arcgis.com/calcite-components/3.3.3/calcite.css" />
+    <script src="https://js.arcgis.com/4.34/"></script>
+    <script type="module" src="https://js.arcgis.com/4.34/map-components/"></script>
+
+	<style>
+	html, body {
+		height: 100%;
+		margin: 0;
+		background: #1a2b55;
+		font-family: "Segoe UI", sans-serif;
+		color: #ecf0f1;
+		overflow: hidden;
+		display: flex;
+		flex-direction: column;
+	}
+
+	:root {
+		--accent-color: #1c5cff;
+	}
+
+	header {
+		background: #0a1e3a;
+		color: #fff;
+		height: 60px;
+		display: flex;
+		align-items: center;
+		padding: 0 16px;
+		gap: 10px;
+		font-weight: 600;
+		z-index: 2;
+		border-bottom: 3px solid var(--accent-color);
+		position: relative;
+		flex: 0 0 auto;
+	}
+
+	header img { height: 32px; }
+
+	header h2 {
+		margin: 0;
+		font-size: 1.4em;
+		white-space: nowrap;
+	}
+
+	arcgis-search {
+		position: absolute;
+		right: 20px;
+		top: 10px;
+		z-index: 10;
+	}
+
+	/* ====== MAIN LAYOUT (Map + Right Panel) ====== */
+	#ui-container {
+		display: grid;
+		grid-template-columns: 1fr 420px;
+		height: calc(100vh - 60px - 28px); /* keeps layout stable */
+		width: 100%;
+		overflow: hidden;
+	}
+
+	/* Map fills left side */
+	arcgis-map {
+		height: 100%;
+		width: 100%;
+		min-width: 0;
+	}
+
+	/* If you use a layer list in the map */
+	arcgis-layer-list {
+		margin-top: 56px;
+	}
+
+	/* Right panel wrapper */
+	#side-panel {
+		height: 100%;
+		min-width: 0;
+		overflow: hidden;
+		display: flex;
+		flex-direction: column;
+		background: #0b2140;
+		border-left: 3px solid var(--accent-color);
+	}
+
+	/* Right panel content container */
+	#panel-inner {
+		height: 100%;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		padding: 12px;
+	}
+
+	/* Table wrapper does ALL scrolling (both axes) */
+  #table-wrap{
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+    overflow: auto;                 /* both directions */
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    background: rgba(255,255,255,0.04);
+  }
+
+	/* Calcite table sizing */
+  calcite-table{
+    width: max-content;
+    min-width: 100%;
+  }
+
+	/* Make cells readable and prevent crazy wrap */
+  calcite-table-head,
+  calcite-table-body{
+    display: table;
+    width: max-content;
+    min-width: 100%;
+    table-layout: fixed;
+  }
+
+	/* Optional: first column wider (IDs / names) */
+  calcite-table-header,
+  calcite-table-cell{
+    min-width: 140px;
+    padding: 6px 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+	footer {
+		height: 28px;
+		background-color: #0a1e3a;
+		color: #eee;
+		text-align: center;
+		line-height: 28px;
+		font-size: 12px;
+		border-top: 3px solid var(--accent-color);
+		z-index: 2;
+		flex: 0 0 auto;
+	}
+	</style>
+
+  </head>
+
+  <body>
+    <header>
+      <img src="https://jcgis.jacksongov.org/images/largelogo.png" alt="Logo">
+      <h2>Public Works Portal</h2>
+      <arcgis-search id="search" include-default-sources-disabled=""></arcgis-search>
+    </header>
+
+    <div id="ui-container">
+      <arcgis-map id="map" item-id="20dd274666f04f5fbbcb5e815c83b75f">
+        <arcgis-layer-list slot="top-right"></arcgis-layer-list>
+      </arcgis-map>
+
+      <!-- NEW: right-side panel -->
+      <div id="side-panel">
+        <div id="panel-inner">
+          <calcite-label>
+            Layer to view
+            <calcite-select id="layerSelect"></calcite-select>
+          </calcite-label>
+
+          <div style="display:flex; gap:10px; align-items:center;">
+            <calcite-button id="refreshBtn" appearance="outline" width="full">Refresh table</calcite-button>
+            <calcite-button id="exportBtn" appearance="outline" width="full" icon-start="download">
+              Export CSV
+            </calcite-button>
+
+            <calcite-notice id="statusNotice" open="" kind="info" scale="s" style="display:none; flex:1;">
+              <div slot="message" id="statusText">Ready</div>
+            </calcite-notice>
+          </div>
+
+          <div id="table-wrap">
+            <calcite-table id="layerTable" caption="Layer Table">
+              <calcite-table-head id="tableHead"></calcite-table-head>
+              <calcite-table-body id="tableBody"></calcite-table-body>
+            </calcite-table>
+          </div>
+
+          <div style="font-size:12px; opacity:0.85;">
+            Showing features within the current map extent (limited for performance).
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      &copy; 2025 - Jackson County Missouri GIS
+      <img src="https://jcgis.jacksongov.org/images/Icons/globe-glow.svg"
+        alt="Globe Icon"
+        style="width:20px;height:20px;vertical-align:text-bottom;margin-left:1px;filter:invert(70%);">
+    </footer>
+
+    <script type="module">
+      const [SearchSource, Graphic, reactiveUtils] = await $arcgis.import([
+        "@arcgis/core/widgets/Search/SearchSource.js",
+        "@arcgis/core/Graphic.js",
+        "@arcgis/core/core/reactiveUtils.js"
+      ]);
+
+      const mapEl = document.getElementById("map");
+      await mapEl.viewOnReady();
+      const view = mapEl.view;
+      const map = view.map;
+
+      await view.when();
+      function escapeCsv(val) {
+        if (val === null || val === undefined) return "";
+        // Dates sometimes come through as epoch ms - you can customize this if you want
+        const s = String(val);
+        // Wrap in quotes if needed and escape quotes
+        if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+        return s;
+      }
+
+      function featuresToCsv(features, fields, headerLabels) {
+        const header = headerLabels.map(escapeCsv).join(",");
+        const lines = features.map(f =>
+          fields.map(fn => escapeCsv(f.attributes?.[fn])).join(",")
+        );
+        return [header, ...lines].join("\r\n");
+      }
+
+      function downloadTextFile(filename, text, mime = "text/csv;charset=utf-8") {
+        const blob = new Blob([text], { type: mime });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      }
+
+      // --- Search: parcels-only (your existing approach) ---
+      const parcelLayer = map.allLayers.find(l => l.title === "Parcels");
+      if (parcelLayer) {
+        await parcelLayer.load();
+
+        const parcelSearchSource = new SearchSource({
+          placeholder: "Search Parcels by Name",
+          getSuggestions: async (params) => {
+            const term = (params.suggestTerm ?? "").replace(/'/g, "''");
+            const res = await parcelLayer.queryFeatures({
+              where: `UPPER(Name) LIKE UPPER('%${term}%')`,
+              outFields: ["OBJECTID", "Name"],
+              returnGeometry: false
+            });
+
+            return res.features.map(f => ({
+              key: f.attributes.OBJECTID,
+              text: f.attributes.Name,
+              sourceIndex: params.sourceIndex
+            }));
+          },
+          getResults: async (params) => {
+            const term = (params.searchTerm ?? "").replace(/'/g, "''");
+            const where = params.suggestResult?.key
+              ? `OBJECTID = ${params.suggestResult.key}`
+              : `UPPER(Name) LIKE UPPER('%${term}%')`;
+
+            const res = await parcelLayer.queryFeatures({
+              where,
+              outFields: ["OBJECTID", "Name"],
+              returnGeometry: true
+            });
+
+            return res.features.map(f => ({ name: f.attributes.Name, feature: f }));
+          }
+        });
+
+        const searchEl = document.getElementById("search");
+        searchEl.sources = [parcelSearchSource];
+
+        searchEl.addEventListener("arcgisSearchComplete", async (evt) => {
+          const result = evt.detail?.results?.[0]?.results?.[0];
+          if (!result) return;
+          const feature = result.feature;
+
+          view.graphics.removeAll();
+          view.graphics.add(new Graphic({
+            geometry: feature.geometry,
+            symbol: {
+              type: "simple-fill",
+              color: [0, 255, 255, 0.25],
+              outline: { color: [0, 255, 255], width: 2 }
+            }
+          }));
+
+          await view.goTo(feature.geometry.extent.expand(2));
+        });
+      }
+
+      // --- NEW: Layer dropdown + Calcite table ---
+      const layerSelect = document.getElementById("layerSelect");
+      const tableHead = document.getElementById("tableHead");
+      const tableBody = document.getElementById("tableBody");
+      const refreshBtn = document.getElementById("refreshBtn");
+      const statusNotice = document.getElementById("statusNotice");
+      const statusText = document.getElementById("statusText");
+
+      function setStatus(msg, show=true) {
+        statusText.textContent = msg;
+        statusNotice.style.display = show ? "flex" : "none";
+      }
+
+      // Choose which layers are selectable (feature layers only, not group layers)
+      const selectableLayers = map.allLayers
+        .toArray()
+        .filter(l =>
+          l.type === "feature" &&
+          l.title &&
+          l.visible &&
+          !l.isTable
+        );
+
+      // Populate dropdown
+      layerSelect.innerHTML = "";
+      selectableLayers.forEach((lyr, idx) => {
+        const opt = document.createElement("calcite-option");
+        opt.value = String(idx);
+        opt.label = lyr.title;
+        opt.textContent = lyr.title;
+        layerSelect.appendChild(opt);
+      });
+
+      if (selectableLayers.length === 0) {
+        setStatus("No visible feature layers found in this web map.", true);
+      } else {
+        setStatus("Ready", false);
+      }
+
+      let currentLayer = selectableLayers[0] ?? null;
+      let currentFields = [];
+
+      let lastTableFeatures = [];   // last query result used to build the table
+      let lastOutFields = [];       // fields used in the table columns
+      
+
+      function pickFields(layer) {
+        // Keep it readable: take first ~6 non-geometry fields, prefer displayField if present
+        const fields = layer.fields ?? [];
+        const usable = fields
+          .filter(f => f && f.type !== "geometry" && f.type !== "blob")
+          .filter(f => f.name.toLowerCase() !== "shape" && f.name.toLowerCase() !== "shape_length" && f.name.toLowerCase() !== "shape_area");
+
+        const displayName = layer.displayField;
+        const displayField = usable.find(f => f.name === displayName);
+        const picked = [];
+
+        if (displayField) picked.push(displayField);
+
+        for (const f of usable) {
+          if (picked.length >= 6) break;
+          if (!picked.some(p => p.name === f.name)) picked.push(f);
+        }
+
+        // Always include OBJECTID if available (for zooming)
+        const oidField = usable.find(f => f.name === layer.objectIdField);
+        if (oidField && !picked.some(p => p.name === oidField.name)) picked.unshift(oidField);
+
+        return picked.slice(0, 7);
+      }
+
+      function clearTable() {
+        tableHead.innerHTML = "";
+        tableBody.innerHTML = "";
+      }
+
+      function buildHeader(fields) {
+        const headRow = document.createElement("calcite-table-row");
+        fields.forEach(f => {
+          const h = document.createElement("calcite-table-header");
+          h.textContent = f.alias || f.name;
+          headRow.appendChild(h);
+        });
+        tableHead.appendChild(headRow);
+      }
+
+      function formatVal(v) {
+        if (v === null || v === undefined) return "";
+        if (typeof v === "number") return String(v);
+        return String(v);
+      }
+
+      async function loadLayerTable() {
+        if (!currentLayer) return;
+
+        setStatus(`Loading: ${currentLayer.title}…`, true);
+        clearTable();
+
+        await currentLayer.load();
+
+        currentFields = pickFields(currentLayer);
+        const outFields = currentFields.map(f => f.name);
+
+        buildHeader(currentFields);
+
+        // Query only what's in the current extent, and cap rows
+        const q = currentLayer.createQuery();
+        q.geometry = view.extent;
+        q.spatialRelationship = "intersects";
+        q.outFields = outFields;
+        q.returnGeometry = true;   // needed so we can zoom/highlight on row click
+        q.num = 20000;               // cap rows for performance
+
+        let res;
+        try {
+          res = await currentLayer.queryFeatures(q);
+        } catch (err) {
+          console.error(err);
+          setStatus("Query failed. Check layer permissions and fields.", true);
+          return;
+        }
+
+        const features = res.features ?? [];
+        if (features.length === 0) {
+          setStatus("No features found in the current extent.", true);
+          return;
+        }
+
+        // Build rows
+        features.forEach((feat) => {
+          const row = document.createElement("calcite-table-row");
+          row.style.cursor = "pointer";
+
+          currentFields.forEach(f => {
+            const cell = document.createElement("calcite-table-cell");
+            cell.textContent = formatVal(feat.attributes?.[f.name]);
+            row.appendChild(cell);
+          });
+
+          row.addEventListener("click", async () => {
+            // highlight + zoom
+            view.graphics.removeAll();
+            view.graphics.add(new Graphic({
+              geometry: feat.geometry,
+              symbol: currentLayer.geometryType === "polygon"
+                ? { type: "simple-fill", color: [255, 255, 0, 0.2], outline: { color: [255, 255, 0], width: 2 } }
+                : currentLayer.geometryType === "polyline"
+                  ? { type: "simple-line", color: [255, 255, 0], width: 3 }
+                  : { type: "simple-marker", size: 10, color: [255, 255, 0], outline: { color: [0,0,0], width: 1 } }
+            }));
+
+            const target = feat.geometry?.extent ? feat.geometry.extent.expand(2) : feat.geometry;
+            if (target) await view.goTo(target);
+          });
+
+          tableBody.appendChild(row);
+        });
+        lastTableFeatures = features;
+        lastOutFields = outFields;
+
+        setStatus(`Showing ${features.length} feature(s) from current extent.`, true);
+      }
+
+      // Layer change
+      layerSelect.addEventListener("calciteSelectChange", async (e) => {
+        const idx = Number(e.target.value);
+        currentLayer = selectableLayers[idx] ?? selectableLayers[0];
+        await loadLayerTable();
+      });
+
+      // Refresh button
+      refreshBtn.addEventListener("click", loadLayerTable);
+
+		let refreshTimer = null;
+
+		reactiveUtils.watch(
+		() => view.stationary,
+		(stationary) => {
+			if (!stationary || !currentLayer) return;
+			if (refreshTimer) clearTimeout(refreshTimer);
+			refreshTimer = setTimeout(() => loadLayerTable(), 300);
+		}
+		);
+
+      // Initial load
+      if (currentLayer) {
+        await loadLayerTable();
+      }
+      const exportBtn = document.getElementById("exportBtn");
+
+      exportBtn.addEventListener("click", async () => {
+        if (!currentLayer) return;
+
+        // If table hasn’t loaded yet, load it once
+        if (!lastTableFeatures || lastTableFeatures.length === 0) {
+          await loadLayerTable();
+        }
+
+        if (!lastTableFeatures || lastTableFeatures.length === 0) {
+          setStatus("Nothing to export (no rows in table).", true);
+          return;
+        }
+
+        // Use the same fields/aliases the table is showing
+        const fields = currentFields.map(f => f.name);
+        const headerLabels = currentFields.map(f => f.alias || f.name);
+
+        const csv = featuresToCsv(lastTableFeatures, fields, headerLabels);
+
+        const safeTitle = (currentLayer.title || "layer")
+          .replace(/[^\w\-]+/g, "_")
+          .slice(0, 60);
+
+        const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+        downloadTextFile(`${safeTitle}_${stamp}.csv`, csv);
+
+        setStatus(`Exported ${lastTableFeatures.length} row(s) to CSV.`, true);
+      });
+
+    </script>
+  </body>
+</html>
