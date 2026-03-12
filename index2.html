@@ -103,7 +103,7 @@
 
 		/* Sidebar */
 		#left-sidebar {
-			width: 260px;
+			width: 400px;
 			background: #0a1e3a;
 			color: white;
 			display: flex;
@@ -121,6 +121,7 @@
 			border-radius: 6px;
 			box-shadow: 0 0 4px rgba(0,0,0,0.4);
 			height: auto;
+			min-height: 0;
 		}
 
 			.panel h3 {
@@ -145,8 +146,15 @@
 			color: white;
 		}
 
-		#buildingList, #floorList, #parcelList, #taxList {
+		#buildingList, #taxList {
 			max-height: 80vh;
+			overflow-y: auto;
+			overflow-x: clip;
+			margin-top: 8px;
+		}
+
+		#floorList, #parcelList {
+			max-height: 28vh;
 			overflow-y: auto;
 			overflow-x: clip;
 			margin-top: 8px;
@@ -361,6 +369,7 @@
 
 		#publicWorksTab {
 			--tab-color: #76cafb;
+			display: none;
 		}
 
 		#specialAssessTab {
@@ -373,30 +382,48 @@
 			top: 14px;
 			left: 14px;
 			z-index: 50;
-			width: 44px;
-			height: 44px;
-			border-radius: 12px;
-			border: 1px solid #1c5cff55;
-			background: #0e203a;
-			color: #fff;
-			display: inline-flex;
+			width: 52px;
+			height: 60px;
+			padding: 6px 6px;
+			display: flex;
+			flex-direction: column;
 			align-items: center;
 			justify-content: center;
+			gap: 4px;
+			background: #fff; /* ✅ white like basemap switcher */
+			color: #2b2b2b;
+			border: 1px solid #d9d9d9; /* ✅ light gray border */
+			border-radius: 10px;
+			box-shadow: 0 1px 3px rgba(0,0,0,0.22); /* ✅ subtle */
 			cursor: pointer;
-			box-shadow: 0 0 10px #00000066;
-			transition: 140ms ease;
+			transition: 120ms ease;
 		}
 
 			.view-toggle-fab:hover {
-				border-color: #1c5cffcc;
-				box-shadow: 0 0 16px #1c5cffaa;
+				background: #f6f6f6;
+				box-shadow: 0 2px 6px rgba(0,0,0,0.25);
 				transform: translateY(-1px);
 			}
 
 			.view-toggle-fab:active {
-				transform: scale(0.94);
+				transform: scale(0.97);
 			}
-		/* Apply to all 4 lists */
+
+		/* icon color like calcite action icons */
+		#viewToggleFabIcon {
+			color: #4a4a4a;
+		}
+
+		/* small label under icon */
+		.view-toggle-fab-text {
+			font-size: 11px;
+			font-weight: 700;
+			letter-spacing: 0.5px;
+			line-height: 1;
+			color: #4a4a4a;
+			user-select: none;
+		}
+		/* Apply to all 3 lists */
 		#buildingList, #floorList, #parcelList, #taxList {
 			scrollbar-gutter: stable;
 			overscroll-behavior: contain;
@@ -482,8 +509,8 @@
 
 			<div class="header-tabs" role="tablist" aria-label="Main tabs">
 				<button id="parcelViewerTab" class="header-tab active" role="tab" aria-selected="true">
-					<calcite-icon icon="parcel-layer" scale="m"></calcite-icon>
-					<span>Parcel Viewer</span>
+					<calcite-icon style="color:#cad2e6" icon="parcel-layer" scale="m"></calcite-icon>
+					<span style="color:#cad2e6">Parcel Viewer</span>
 				</button>
 
 				<button id="publicWorksTab" class="header-tab" role="tab" aria-selected="false">
@@ -492,8 +519,8 @@
 				</button>
 
 				<button id="specialAssessTab" class="header-tab" role="tab" aria-selected="false">
-					<calcite-icon icon="analysis" scale="m"></calcite-icon>
-					<span>Special Assessment</span>
+					<calcite-icon style="color:#c9f6cf" icon="graph-line-series" scale="m"></calcite-icon>
+					<span style="color:#c9f6cf">Special Assessment</span>
 				</button>
 			</div>
 
@@ -525,7 +552,8 @@
 			<div id="parcelView" class="page-view">
 				Floating 2D/3D toggle (ONLY for Parcel Viewer)
 				<button id="viewToggleFab" class="view-toggle-fab" title="Switch 2D / 3D">
-					<calcite-icon id="viewToggleFabIcon" icon="3d-glasses" scale="l"></calcite-icon>
+					<calcite-icon id="viewToggleFabIcon" icon="globe" scale="m"></calcite-icon>
+					<div id="viewToggleFabText" class="view-toggle-fab-text">2D</div>
 				</button>
 
 
@@ -533,10 +561,16 @@
 					<arcgis-expand slot="top-right" mode="floating" visual-scale="l">
 						<arcgis-basemap-gallery></arcgis-basemap-gallery>
 					</arcgis-expand>
+					<arcgis-expand slot="top-right" mode="floating" visual-scale="l">
+						<arcgis-layer-list drag-enabled></arcgis-layer-list>
+					</arcgis-expand>
 				</arcgis-map>
 				<arcgis-scene id="scene" class="view-element" item-id="f45587ca1ccb4d918269be01c1428698" environment="lighting: 'sunny'">
-					<arcgis-expand slot="bottom-right" mode="floating" visual-scale="s">
+					<arcgis-expand slot="top-right" mode="floating" visual-scale="l">
 						<arcgis-basemap-gallery></arcgis-basemap-gallery>
+					</arcgis-expand>
+					<arcgis-expand slot="top-right" mode="floating" visual-scale="l">
+						<arcgis-layer-list drag-enabled></arcgis-layer-list>
 					</arcgis-expand>
 				</arcgis-scene>
 			</div>
@@ -548,7 +582,7 @@
 			</div>
 		</div>
 
-		<!-- PUBLIC WORKS PAGE -->
+		<!-- PUBLIC WORKS PAGE-->
 		<div id="page-pw" class="app-page">
 			<div class="page-view">
 				<arcgis-map id="pwMap" class="view-element visible" item-id="af689ed76f0842b5a7383bff11a6892c"> <arcgis-basemap-gallery slot="top-right"></arcgis-basemap-gallery></arcgis-map>
@@ -629,11 +663,21 @@
 			const [
 				SearchSource,
 				Graphic,
-				FeatureFilter
+				FeatureFilter,
+				unionOperator,
+				simplifyOperator,
+				convexHullOperator,
+				generalizeOperator,
+				projectOperator
 			]=await $arcgis.import([
 				"@arcgis/core/widgets/Search/SearchSource.js",
 				"@arcgis/core/Graphic.js",
-				"@arcgis/core/layers/support/FeatureFilter.js"
+				"@arcgis/core/layers/support/FeatureFilter.js",
+				"@arcgis/core/geometry/operators/unionOperator.js",
+				"@arcgis/core/geometry/operators/simplifyOperator.js",
+				"@arcgis/core/geometry/operators/convexHullOperator.js",
+				"@arcgis/core/geometry/operators/generalizeOperator.js",
+				"@arcgis/core/geometry/operators/projectOperator.js"
 			]);
 
 			// ---- Page + header refs
@@ -673,9 +717,16 @@
 
 			function updateFabIcon()
 			{
-				// show current mode
-				viewToggleFabIcon.setAttribute("icon",activeView===sceneView? "3d-glasses":"globe");
-				viewToggleFab.title=activeView===sceneView? "3D (click for 2D)":"2D (click for 3D)";
+				const is3D=(activeView===sceneView);
+
+				// icon
+				viewToggleFabIcon.setAttribute("icon",is3D? "3d-glasses":"globe");
+
+				// label under icon
+				viewToggleFabText.textContent=is3D? "3D":"2D";
+
+				// tooltip
+				viewToggleFab.title=is3D? "3D (click for 2D)":"2D (click for 3D)";
 			}
 			updateFabIcon();
 
@@ -814,6 +865,7 @@
 			// ---- LayerViews
 			let parcelLayerView=null;
 			let floorLayerView=null;
+			let regularParcelLayerView=null;
 
 			async function refreshLayerRefs()
 			{
@@ -833,8 +885,10 @@
 
 				try { floorLayerView=floorLayer? await sceneView.whenLayerView(floorLayer):null; }
 				catch { floorLayerView=null; }
-			}
 
+				try { regularParcelLayerView=regularParcelLayer? await mapView.whenLayerView(regularParcelLayer):null; }
+				catch { regularParcelLayerView=null; }
+			}
 			// ---- Utility
 			function clearSelection(container)
 			{
@@ -851,9 +905,11 @@
 
 			function clearHighlightsAndSets()
 			{
-				highlightedParcels.forEach(handle => { try { handle.remove(); } catch { } });
+				highlightedParcels.forEach(handle =>
+				{
+					try { handle.remove(); } catch { }
+				});
 				highlightedParcels.clear();
-				parcelListSelectedOIDs.clear();
 			}
 
 			function restoreBuildingListVisibility()
@@ -867,29 +923,101 @@
 				});
 			}
 
+			function getSelectionKey(feature)
+			{
+				const attrs=feature?.attributes||{};
+				const layerTitle=feature?.layer?.title||"UnknownLayer";
+				const oid=attrs.OBJECTID??attrs.ObjectID??attrs.oid??attrs.OID??"";
+				const name=attrs.Name||attrs.PIN||attrs.ParcelNumber||"";
+				return `${layerTitle}::${oid}::${name}`;
+			}
+
+			function isRegular2DParcel(feature)
+			{
+				return feature?.layer?.title==="Parcels";
+			}
+
+			function isCondo3DParcel(feature)
+			{
+				return feature?.layer?.title==="Parcel Condominiums"||feature?.layer?.title==="Parcel Condominiums Floors";
+			}
+
+			function getParcelDisplayName(feature)
+			{
+				return feature?.attributes?.Name||"Unknown Parcel";
+			}
+
+			function getHighlightLayerViewForFeature(feature)
+			{
+				if(isRegular2DParcel(feature)) return regularParcelLayerView;
+				if(isCondo3DParcel(feature)) return floorLayerView;
+				return null;
+			}
+
+
+			function getEncodedPoly(geoms)
+			{
+
+				const valid=(geoms||[]).filter(g => g&&g.type==="polygon");
+				if(!valid.length) return "";
+
+				const unioned=valid.length===1
+					? valid[0]
+					:unionOperator.executeMany(valid);
+
+				const simplified=simplifyOperator.execute(unioned)||unioned;
+
+				const hull=convexHullOperator.execute(simplified)||simplified;
+
+				const generalized=generalizeOperator.execute(
+					hull,
+					10,
+					{ removeDegenerateParts: true }
+				)||hull;
+
+				let geoPoly=generalized;
+
+				if(geoPoly.spatialReference?.wkid!==4326)
+				{
+					geoPoly=projectOperator.execute(geoPoly,{ wkid: 4326 });
+				}
+
+				if(!geoPoly?.rings?.length) return "";
+
+				const rings=geoPoly.rings.map(ring =>
+					ring
+						.map(pt => `${pt[1].toFixed(6)} ${pt[0].toFixed(6)}`)
+						.join(";")
+				);
+
+				return rings.join("|");
+			}
+
 			function updateSelectedPanel()
 			{
 				selectedParcelContentEl.innerHTML="";
+
 				selectedParcels.forEach(f =>
 				{
-					const name=f.attributes.Name;
+					const selectionKey=getSelectionKey(f);
+					const name=getParcelDisplayName(f);
+
 					const div=document.createElement("div");
 					div.className="selected-parcel-item";
 					div.innerHTML=`<span>${name}</span><button class="remove-button">✖</button>`;
+
 					div.querySelector(".remove-button").onclick=async () =>
 					{
-						const oid=f.attributes.OBJECTID;
-						const idx=selectedParcels.findIndex(x => x.attributes.OBJECTID===oid);
+						const idx=selectedParcels.findIndex(x => getSelectionKey(x)===selectionKey);
 						if(idx>=0) selectedParcels.splice(idx,1);
 
-						const handle=highlightedParcels.get(oid);
+						const handle=highlightedParcels.get(selectionKey);
 						if(handle)
 						{
 							try { handle.remove(); } catch { }
-							highlightedParcels.delete(oid);
+							highlightedParcels.delete(selectionKey);
 						}
 
-						parcelListSelectedOIDs.delete(oid);
 						updateSelectedPanel();
 
 						if(selectedParcels.length===0)
@@ -897,40 +1025,45 @@
 							document.getElementById("selectedParcelList").style.display="none";
 						}
 					};
+
 					selectedParcelContentEl.appendChild(div);
 				});
+
+				document.getElementById("selectedParcelList").style.display=
+					selectedParcels.length? "block":"none";
 			}
 
 			async function toggleParcelSelection(feature)
 			{
-				const oid=feature.attributes?.OBJECTID;
-				if(!oid) return;
+				if(!feature) return;
 
-				document.getElementById("selectedParcelList").style.display="block";
+				const selectionKey=getSelectionKey(feature);
+				const alreadySelectedIndex=selectedParcels.findIndex(f => getSelectionKey(f)===selectionKey);
 
-				const alreadySelected=selectedParcels.some(f => f.attributes.OBJECTID===oid);
-
-				if(alreadySelected)
+				if(alreadySelectedIndex>=0)
 				{
-					selectedParcels.splice(selectedParcels.findIndex(f => f.attributes.OBJECTID===oid),1);
+					selectedParcels.splice(alreadySelectedIndex,1);
 
-					const handle=highlightedParcels.get(oid);
+					const handle=highlightedParcels.get(selectionKey);
 					if(handle)
 					{
 						try { handle.remove(); } catch { }
-						highlightedParcels.delete(oid);
+						highlightedParcels.delete(selectionKey);
 					}
-
-					parcelListSelectedOIDs.delete(oid);
-				} else
+				}
+				else
 				{
 					selectedParcels.push(feature);
 
-					// highlight on Floors layer view (your chosen behavior)
-					if(floorLayerView)
+					const lv=getHighlightLayerViewForFeature(feature);
+					if(lv)
 					{
-						const handle=floorLayerView.highlight([oid]);
-						highlightedParcels.set(oid,handle);
+						const oid=feature.attributes?.OBJECTID;
+						if(oid!=null)
+						{
+							const handle=lv.highlight([oid]);
+							highlightedParcels.set(selectionKey,handle);
+						}
 					}
 				}
 
@@ -1186,6 +1319,64 @@
 				document.getElementById("floorPanel").style.display="block";
 			}
 
+			async function selectBuildingFloorParcel(feature)
+			{
+				const cartogNote=feature.attributes.CartogNote;
+				const floorNum=String(feature.attributes.FloorNameDesignator);
+				const parcelName=feature.attributes.Name;
+
+				await switchTo3D();
+
+				// ---------- BUILDING ----------
+				const buildingDiv=Array.from(buildingListEl.children)
+					.find(d => d.textContent===cartogNote);
+
+				if(!buildingDiv)
+				{
+					console.warn("Building not found:",cartogNote);
+					return;
+				}
+
+				await handleBuildingSelection(cartogNote,buildingDiv);
+
+				// wait one frame so floor chips exist
+				await new Promise(r => requestAnimationFrame(r));
+
+				// ---------- FLOOR ----------
+				const floorChip=Array.from(
+					floorListEl.querySelectorAll("calcite-chip")
+				).find(chip => chip.dataset.floor==floorNum);
+
+				if(!floorChip)
+				{
+					console.warn("Floor not found:",floorNum);
+					return;
+				}
+
+				floorChip.classList.add("selected");
+				floorChip.selected=true;
+
+				await handleFloorSelection();
+
+				// wait one frame so parcel list exists
+				await new Promise(r => requestAnimationFrame(r));
+
+				// ---------- PARCEL ----------
+				const parcelDiv=Array.from(
+					parcelListEl.querySelectorAll(".parcel-list-item")
+				).find(d => d.dataset.name===parcelName);
+
+				if(!parcelDiv)
+				{
+					console.warn("Parcel not found:",parcelName);
+					return;
+				}
+
+				parcelDiv.classList.add("selected");
+
+				await toggleParcelSelection(feature);
+			}
+
 			async function handleFloorSelection()
 			{
 				document.getElementById("parcelPanel").style.display="block";
@@ -1220,20 +1411,14 @@
 						divP.textContent=p.attributes.Name;
 						divP.dataset.name=p.attributes.Name;
 
+						// ✅ Use it inside your parcel-list click:
 						divP.onclick=async () =>
 						{
-							const oid=p.attributes.OBJECTID;
-							parcelListSelectedOIDs.add(oid);
-							divP.classList.add("selected");
-
-							if(!p?.geometry)
-							{
-								alert("❌ Parcel geometry missing");
-								return;
-							}
-
-							await activeView.goTo({ target: p.geometry.extent.expand(20),tilt: sceneView.camera.tilt });
+							await switchTo3D();
 							await toggleParcelSelection(p);
+
+							const isNowSelected=selectedParcels.some(f => getSelectionKey(f)===getSelectionKey(p));
+							divP.classList.toggle("selected",isNowSelected);
 						};
 
 						parcelListEl.appendChild(divP);
@@ -1258,15 +1443,55 @@
 			{
 				v.on("click",async (event) =>
 				{
+					if(currentPage!=="parcel") return;
+
 					const hit=await v.hitTest(event);
-					const result=hit.results.find(r => r.graphic?.layer&&parcelLayer&&(r.graphic.layer===parcelLayer));
-					if(!result) return;
 
-					const feature=result.graphic;
-					const oid=feature.attributes?.OBJECTID;
-					if(!oid) return;
+					// 3D condo/floor clicks
+					if(v===sceneView)
+					{
+						const result=hit.results.find(r =>
+							r.graphic?.layer&&
+							(
+								r.graphic.layer===floorLayer||
+								r.graphic.layer===condoLayer
+							)
+						);
 
-					await toggleParcelSelection(feature);
+						if(!result) return;
+
+						const feature=result.graphic;
+						await toggleParcelSelection(feature);
+						return;
+					}
+
+					// 2D regular parcel clicks
+					if(v===mapView)
+					{
+						const result=hit.results.find(r =>
+							r.graphic?.layer&&
+							regularParcelLayer&&
+							r.graphic.layer===regularParcelLayer
+						);
+
+						if(!result) return;
+
+						const oid=result.graphic.attributes?.OBJECTID;
+						if(oid==null) return;
+
+						// Query full feature (ensures parcel number field exists)
+						const res=await regularParcelLayer.queryFeatures({
+							where: `OBJECTID = ${oid}`,
+							outFields: ["*"],
+							returnGeometry: true
+						});
+
+						const feature=res.features?.[0];
+						if(!feature) return;
+
+						// Store the same way as other selections
+						await toggleParcelSelection(feature);
+					}
 				});
 			}
 			attachViewClickHandler(sceneView);
@@ -1382,7 +1607,8 @@
 
 						if(buildingDiv)
 						{
-							await handleBuildingSelection(buildingName,buildingDiv);
+							//await handleBuildingSelection(buildingName,buildingDiv);
+							await selectBuildingFloorParcel(feature);
 						}
 					}
 				} else
@@ -1400,6 +1626,7 @@
 					}));
 
 					await mapView.goTo({ target: feature.geometry.extent.expand(2) });
+					await toggleParcelSelection(feature);
 				}
 			});
 
@@ -1410,7 +1637,38 @@
 					alert("Please select at least one parcel.");
 					return;
 				}
-				alert("Selected parcels count: "+selectedParcels.length);
+
+				const geometries=selectedParcels
+					.map(f => f.geometry)
+					.filter(Boolean);
+
+				if(!geometries.length)
+				{
+					alert("No valid parcel geometry found.");
+					return;
+				}
+
+				const coordString=getEncodedPoly(geometries);
+
+				if(!coordString)
+				{
+					alert("Unable to build parcel geometry for Survey123.");
+					return;
+				}
+
+				const parcelNums=selectedParcels
+					.map(f => getParcelDisplayName(f))
+					.filter(Boolean)
+					.join(",");
+
+				const surveyUrl=[
+					"https://survey123.arcgis.com/share/e789e03c9619425dbd19fda1512eb24a?",
+					"field:poly=",encodeURIComponent(coordString),
+					"&field:parcelnumber=",encodeURIComponent(parcelNums),
+					"&encodeUrlParams=true"
+				].join("");
+
+				window.open(surveyUrl,"_blank");
 			};
 
 			// ---- Init
