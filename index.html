@@ -11,6 +11,7 @@
   <script src="https://js.arcgis.com/4.34/"></script>
   <script type="module" src="https://js.arcgis.com/4.34/map-components/"></script>
 
+<!-- style -->
   <style>
     html, body {
       height: 100%;
@@ -858,147 +859,6 @@
 		}
 
 		// ---------------------------------------------------------------------------
-		// Building filter: ESRI 3D Buildings + condo layers (buffered extent)
-		// ---------------------------------------------------------------------------
-		async function applyBuildingFilter(extent,cartogNote)
-		{
-			console.log("🏗 Applying SceneFilter + FeatureFilters using EXTENT:",extent,"for",cartogNote);
-
-			// 🧹 Remove any old debug geometries first
-			view.graphics.removeMany(view.graphics.filter(g => g.attributes?.debugType?.startsWith("filter-")));
-
-			// 1️⃣ Project extent to the view’s SR
-			const projectedExtent=await projectOperator.execute(extent,view.spatialReference);
-
-			// Build extent polygon (Parcel Condominiums envelope)
-			const extentPoly=new Polygon({
-				rings: [
-					[projectedExtent.xmin,projectedExtent.ymin],
-					[projectedExtent.xmax,projectedExtent.ymin],
-					[projectedExtent.xmax,projectedExtent.ymax],
-					[projectedExtent.xmin,projectedExtent.ymax],
-					[projectedExtent.xmin,projectedExtent.ymin]
-				],
-				spatialReference: view.spatialReference
-			});
-
-			// 🟦 Draw the base extent polygon
-			view.graphics.add(new Graphic({
-				geometry: extentPoly,
-				symbol: {
-					type: "simple-fill",
-					color: [0,255,255,0.05],
-					outline: { color: [0,255,255,0.8],width: 2 }
-				},
-				attributes: { debugType: "filter-extent" }
-			}));
-
-			// 2️⃣ Get the actual building footprint (spatially contains one parcel)
-			const parcelSample=await parcelLayer.queryFeatures({
-				where: `CartogNote = '${cartogNote.replace(/'/g,"''")}'`,
-				returnGeometry: true,
-				outFields: ["*"],
-				num: 1
-			});
-
-			let buildingGeom=null;
-			if(parcelSample.features.length)
-			{
-				const sampleGeom=parcelSample.features[0].geometry;
-
-				const buildingResult=await buildingFootprintLayer.queryFeatures({
-					geometry: sampleGeom,
-					spatialRelationship: "contains",
-					returnGeometry: true,
-					outFields: ["*"]
-				});
-
-				if(buildingResult.features.length)
-				{
-					buildingGeom=await projectOperator.execute(
-						buildingResult.features[0].geometry,
-						view.spatialReference
-					);
-
-					// 🟩 Draw building footprint area
-					view.graphics.add(new Graphic({
-						geometry: buildingGeom,
-						symbol: {
-							type: "simple-fill",
-							color: [0,255,0,0.08],
-							outline: { color: [0,255,0,1],width: 2 }
-						},
-						attributes: { debugType: "filter-building" }
-					}));
-				} else
-				{
-					console.warn("⚠ No building footprint found for:",cartogNote);
-				}
-			}
-
-			// 3️⃣ Expanded extent for ESRI 3D disjoint filtering
-			const expandedExtent=extent.expand(1.5);
-			const expandedProj=await projectOperator.execute(expandedExtent,view.spatialReference);
-
-			const expandedPoly=new Polygon({
-				rings: [
-					[expandedProj.xmin,expandedProj.ymin],
-					[expandedProj.xmax,expandedProj.ymin],
-					[expandedProj.xmax,expandedProj.ymax],
-					[expandedProj.xmin,expandedProj.ymax],
-					[expandedProj.xmin,expandedProj.ymin]
-				],
-				spatialReference: view.spatialReference
-			});
-
-			// 🟥 Draw expanded ESRI 3D filter area
-			view.graphics.add(new Graphic({
-				geometry: expandedPoly,
-				symbol: {
-					type: "simple-fill",
-					color: [255,0,0,0.05],
-					outline: { color: [255,0,0,0.8],width: 2 }
-				},
-				attributes: { debugType: "filter-esri3d" }
-			}));
-
-			// 4️⃣ Apply filters
-			// -- ESRI 3D Buildings (disjoint: hide surroundings)
-			if(esri3dBuildingsLayer)
-			{
-				esri3dBuildingsLayer.filter=new SceneFilter({
-					geometries: [expandedPoly],
-					spatialRelationship: "disjoint"
-				});
-			}
-
-			// -- Feature filters for building/floor/parcel
-			const filterGeom=buildingGeom||extentPoly;
-			const featureLayers=[buildingFootprintLayer,floorLayer,parcelLayer].filter(Boolean);
-
-			for(const layer of featureLayers)
-			{
-				const lv=await view.whenLayerView(layer);
-
-				// Apply CartogNote only if that field exists
-				const hasCartog=layer.fields.some(f => f.name==="CartogNote");
-				const whereClause=hasCartog
-					? `CartogNote = '${cartogNote.replace(/'/g,"''")}'`
-					:"1=1";
-
-				lv.filter=new FeatureFilter({
-					geometry: filterGeom,
-					spatialRelationship: "contains",
-					where: whereClause
-				});
-			}
-
-			console.log("🏁 Filters applied visually (cyan=extent, green=footprint, red=ESRI3D buffer)");
-		}
-
-
-
-		// ---------------------------------------------------------------------------
 		// Floor filter: restrict to selected floors within current building extent
 		// ---------------------------------------------------------------------------
 		async function applyFloorFilter(buildingExtent,floorNums)
@@ -1069,8 +929,6 @@
 		async function handleBuildingSelection(cartogNote,div)
 		{
 			fadeOutTitleLayer();
-
-			// Track which building we clicked (handy for other logic if needed)
 			currentBuildingName=cartogNote;
 
 			const allBuildingDivs=Array.from(buildingListEl.children);
@@ -1083,10 +941,7 @@
 			{
 				console.log("🔄 Expanding building list back to full list");
 
-				// Show all buildings again
 				allBuildingDivs.forEach(el => (el.style.display=""));
-
-				// Reset UI
 				clearSelection(buildingListEl);
 				floorListEl.innerHTML="";
 				parcelListEl.innerHTML="";
@@ -1094,12 +949,22 @@
 				document.getElementById("floorPanel").style.display="none";
 				document.getElementById("parcelPanel").style.display="none";
 
-				// Reset visibility
-				if(buildingFootprintLayer) buildingFootprintLayer.visible=true;
+				// ✅ Clear ONLY the building footprint filter
+				if(buildingFootprintLayer)
+				{
+					const lvB=await view.whenLayerView(buildingFootprintLayer);
+					lvB.filter=null;
+					buildingFootprintLayer.visible=true;
+				}
+
 				if(floorLayer) floorLayer.visible=false;
 				if(parcelLayer) parcelLayer.visible=false;
 
-				return; // ⛔ stop here
+				view.graphics.removeMany(
+					view.graphics.filter(g => g.attributes?.debugType==="building-outline")
+				);
+
+				return;
 			}
 
 			console.group("🏢 handleBuildingSelection:",cartogNote);
@@ -1110,7 +975,7 @@
 				el.style.display=el===div? "":"none";
 			});
 
-			// UI reset for this new selection
+			// ✅ Keep your smooth UI selection block
 			clearSelection(buildingListEl);
 			div.classList.add("selected");
 			div.scrollIntoView({ behavior: "smooth",block: "nearest" });
@@ -1121,7 +986,8 @@
 			parcelListEl.innerHTML="";
 
 			// 🔍 Query parcels for that building
-			const where=`CartogNote = '${cartogNote.replace(/'/g,"''")}'`;
+			const safeCartog=cartogNote.replace(/'/g,"''");
+			const where=`CartogNote = '${safeCartog}'`;
 
 			const res=await parcelLayer.queryFeatures({
 				where,
@@ -1129,86 +995,106 @@
 				returnGeometry: true
 			});
 
-			// 🧪 DEBUG: see what CartogNotes actually came back
-			if(DEBUG)
-			{
-				const distinctCartogs=[...new Set(res.features.map(f => f.attributes.CartogNote))];
-
-				alert(
-					[
-						"BUILDING DEBUG",
-						"-----------------------------",
-						`Clicked CartogNote: ${cartogNote}`,
-						`WHERE clause: ${where}`,
-						`Features returned: ${res.features.length}`,
-						"",
-						"Distinct CartogNote values in result:",
-						distinctCartogs.length? distinctCartogs.join(", "):"(none)"
-					].join("\n")
-				);
-			}
-
-			allFeaturesForBuilding=res.features;
+			allFeaturesForBuilding=res.features||[];
 			console.log("📦 Parcels found:",allFeaturesForBuilding.length);
 
-			// 🔭 Compute building extent
-			const extent=allFeaturesForBuilding.reduce((acc,f) =>
+			// ✅ Full building extent (from ALL parcels)
+			const parcelExtent=allFeaturesForBuilding.reduce((acc,f) =>
 			{
 				if(!f.geometry) return acc;
-				return acc? acc.union(f.geometry.extent):f.geometry.extent.clone();
+				const ex=f.geometry.extent;
+				return acc? acc.union(ex):ex.clone();
 			},null);
 
-			if(extent)
+			// ✅ Filter ONLY building footprint layer using the selected extent
+			if(parcelExtent&&buildingFootprintLayer)
 			{
-				console.log("🔍 Zooming to building extent…", extent);
-				const cameraExtent=extent;
-				await view.goTo({
-					target: cameraExtent,
-					tilt: 79,
-					position: { z: 5 }
+				// clear previous building filter first
+				const lvB=await view.whenLayerView(buildingFootprintLayer);
+				lvB.filter=null;
+
+				// build extent polygon in view SR
+				const projectedExtent=await projectOperator.execute(parcelExtent,view.spatialReference);
+				const extentPoly=new Polygon({
+					rings: [
+						[projectedExtent.xmin,projectedExtent.ymin],
+						[projectedExtent.xmax,projectedExtent.ymin],
+						[projectedExtent.xmax,projectedExtent.ymax],
+						[projectedExtent.xmin,projectedExtent.ymax],
+						[projectedExtent.xmin,projectedExtent.ymin]
+					],
+					spatialReference: view.spatialReference
 				});
+
+				// 1️⃣ Apply the filter as you already do
+				// 1️⃣ Apply the filter
+				lvB.filter=new FeatureFilter({
+					geometry: extentPoly,
+					spatialRelationship: "intersects"
+				});
+
+				// 2️⃣ Wait until the layer view finishes drawing (safe in all 4.x versions)
+				while(lvB.updating)
+				{
+					await new Promise(resolve => requestAnimationFrame(resolve));
+				}
+
+				// 3️⃣ Zoom directly to the geometry used for filtering
+				// SceneLayerViews cannot query features, but zooming to the filter geometry works fine
+				console.log("✅ Filter applied to SceneLayer — zooming to geometry…");
+				await view.goTo(
+					{
+						target: extentPoly,
+						tilt: 75,
+						heading: view.camera.heading
+					},
+					{ easing: "in-out-cubic" }
+				);
+
+				// Optional: highlight the filtered feature(s)
+				lvB.highlightOptions={ color: [0,255,255,1],haloOpacity: 0.8,fillOpacity: 0.15 };
+				const highlightHandle=lvB.highlight([]);
+
+
 			}
 
-			// ✏️ Draw building outline
+			// ✅ Zoom to FULL building extent (parcelExtent), smoother camera
+			
+
+			// ✏️ Outline (optional)
 			view.graphics.removeMany(
 				view.graphics.filter(g => g.attributes?.debugType==="building-outline")
 			);
 
-			if(extent)
+			if(parcelExtent)
 			{
 				view.graphics.add(
 					new Graphic({
-						geometry: extent,
+						geometry: parcelExtent,
 						symbol: {
 							type: "simple-fill",
-							color: [0,255,255,0.05],
-							outline: { color: [0,255,255,0.6],width: 2 }
+							color: [0,255,255,0.04],
+							outline: { color: [0,255,255,0.8],width: 2 }
 						},
 						attributes: { debugType: "building-outline" }
 					})
 				);
 			}
 
-			// 🧱 Build floors list for this building
+			// Keep your existing flow
 			await renderFloorsForBuilding(allFeaturesForBuilding);
-
-			// 🎯 Apply building-level filters (3D buildings + feature layers)
-			if(extent)
-			{
-				await applyBuildingFilter(extent,cartogNote);
-			}
-
-			// Show floors panel
 			document.getElementById("floorPanel").style.display="block";
 
-			// Visibilities when a building is selected:
 			if(buildingFootprintLayer) buildingFootprintLayer.visible=true;
-			if(floorLayer) floorLayer.visible=false;   // will turn on after floor selection
-			if(parcelLayer) parcelLayer.visible=false; // only after floors are chosen
+			if(floorLayer) floorLayer.visible=false;
+			if(parcelLayer) parcelLayer.visible=false;
 
-			currentBuildingExtent=extent;
+			currentBuildingExtent=parcelExtent;
+
 			console.groupEnd();
 		}
+
+
 
 
 		// ---------------------------------------------------------------------------
