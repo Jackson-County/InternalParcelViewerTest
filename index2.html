@@ -401,11 +401,10 @@
 			align-items: center;
 			justify-content: center;
 			gap: 4px;
-			background: #fff; /* ✅ white like basemap switcher */
+			background: #fff; 
 			color: #2b2b2b;
-			border: 1px solid #d9d9d9; /* ✅ light gray border */
+			border: 1px solid #d9d9d9; 
 			border-radius: 10px;
-			box-shadow: 0 1px 3px rgba(0,0,0,0.22); /* ✅ subtle */
 			cursor: pointer;
 			transition: 120ms ease;
 		}
@@ -420,7 +419,7 @@
 				transform: scale(0.97);
 			}
 
-		/* icon color like calcite action icons */
+
 		#viewToggleFabIcon {
 			color: #4a4a4a;
 		}
@@ -653,6 +652,42 @@
 			<div id="taxView" class="page-view">
 				<arcgis-map id="saMap" class="visible" item-id="715b4ef93362498e97db7393dc2b7d17">
 					<arcgis-layer-list slot="top-right"></arcgis-layer-list>
+					  <arcgis-expand
+							slot="top-left"
+							auto-collapse="true"
+							mode="floating"
+							visual-scale="m"
+							expandIcon="information"
+						>
+						<calcite-card>
+							<h3>Guidance for testing:</h3>
+							<p>
+							Please look at some of the functions/design elements we would like you to review below. Consider the following questions:
+							</p>
+							<ul>
+								<li>What do you like or dislike about the function/component?</li>	
+								<li>How challenging or easy is it to use?</li>
+								<li>What errors are coming up?</li>
+								<li>What functions would improve your experience?</li>
+							</ul>
+							<h3>Special Assessment</h3>
+							<ul>
+								<li>Overall layout</li>
+								<li>Map symbology</li>
+								<li>Map layers – missing layers?</li>
+								<li>Parcel Search
+									<ul>
+										<li>Search regular parcel number in search bar</li>
+										<li>Multi-Select on Map</li>
+										<li>Deselect on Map</li>
+									</ul>
+								</li>
+								<li>Search Special Tax District in sidebar</li>
+								<li>Select multiple Special Tax Districts in sidebar</li>
+								<li>Export data from feature table</li>
+							</ul>
+						</calcite-card>
+					</arcgis-expand>
 				</arcgis-map>
 				<arcgis-feature-table
 					id="parcelsTable"
