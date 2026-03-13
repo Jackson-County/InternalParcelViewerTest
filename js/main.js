@@ -54,8 +54,4 @@ import { attachQueryTableListener } from "./queryTable.js";
   attachSelectAllLogic(combobox);
   attachSelectionListLogic(combobox, selectionList);
   attachQueryTableListener(combobox, featureTable);
-
-  const functionsButton = document.getElementById("functionsButton");
-  const functionsDialog = document.getElementById("functionsDialog");
-  functionsButton.addEventListener("click", () => { functionsDialog.open = true; });
 })();
