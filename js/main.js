@@ -2,16 +2,12 @@
 const [
   Graphic,
   FeatureLayer,
-  FeatureTable,
-  FeatureTableVM,
   SearchSource,
   FeatureFilter,
   reactiveUtils
 ] = await $arcgis.import([
   "@arcgis/core/Graphic.js",
   "@arcgis/core/layers/FeatureLayer.js",
-  "@arcgis/core/widgets/FeatureTable.js",
-  "@arcgis/core/widgets/FeatureTable/FeatureTableViewModel.js",
   "@arcgis/core/widgets/Search/SearchSource.js",
   "@arcgis/core/layers/support/FeatureFilter.js",
   "@arcgis/core/core/reactiveUtils.js"
@@ -19,16 +15,17 @@ const [
 
 import { initMap } from "./mapSetup.js";
 import { createFeatureTable } from "./featureTable.js";
-import { createParcelSearch } from "./searchParcels.js";
+import { createRegularParcelSearch } from "./searchParcels.js";
 import { populateComboboxGroup, attachSelectAllLogic, attachSelectionListLogic } from "./combobox.js";
 import { attachQueryTableListener } from "./queryTable.js";
 
 (async function() {
-  const mapEl = document.getElementById("map");
-  const { map, view, parcelLayer } = await initMap(mapEl);
+  const saMap = document.getElementById("saMap");
+  const { map, view, parcelLayer } = await initMap(saMap);
+  const regularParcelLayer = map.layers.find(l => l.title === "Parcels");
+  if (regularParcelLayer) await regularParcelLayer.load();
 
-  // Pass ArcGIS classes into your modules
-  const featureTable = createFeatureTable({
+  const featureTable = await createFeatureTable({
     view,
     layer: parcelLayer,
     containerId: "parcelsTable",
@@ -36,10 +33,13 @@ import { attachQueryTableListener } from "./queryTable.js";
   });
 
   const searchEl = document.getElementById("search");
-  createParcelSearch({
+  const parcelsTable = document.getElementById("parcelsTable");
+
+  await createRegularParcelSearch({
     searchEl,
-    parcelLayer,
-    view,
+    regularParcelLayer,
+    mapView: view,
+    parcelsTable: featureTable,
     SearchSourceClass: SearchSource,
     GraphicClass: Graphic
   });

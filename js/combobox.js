@@ -1,26 +1,38 @@
 // combobox.js
 export async function populateComboboxGroup({ map, layerTitle, fieldName, groupId, valuePrefix }) {
-  const layer = map.allLayers.find(l => l.title === layerTitle);
+
+  const layer = map.allLayers
+    .toArray()
+    .flatMap(l => l.type === "group" ? l.layers.toArray() : [l])
+    .find(l => l.title === layerTitle && l.declaredClass === "esri.layers.FeatureLayer");
+
   if (!layer) {
     console.warn(`Layer not found: ${layerTitle}`);
     return;
   }
+
   await layer.load();
 
   const query = layer.createQuery();
+  query.where = "1=1";
   query.outFields = [fieldName];
   query.returnDistinctValues = true;
-  query.where = "1=1";
+  query.orderByFields = [fieldName];
+  query.returnGeometry = false;
 
   const { features } = await layer.queryFeatures(query);
-  const values = features.map(f => f.attributes[fieldName])
-                         .filter(v => v != null)
-                         .sort((a,b)=>a.localeCompare(b));
+
+  const values = features
+    .map(f => f.attributes[fieldName])
+    .filter(v => v != null)
+    .sort((a,b)=>a.localeCompare(b));
 
   const groupEl = document.getElementById(groupId);
+  groupEl.innerHTML = "";
+
   values.forEach(value => {
     const item = document.createElement("calcite-combobox-item");
-    item.value = `${valuePrefix}:${value}`;
+    item.value = value;
     item.textLabel = value;
     groupEl.appendChild(item);
   });
