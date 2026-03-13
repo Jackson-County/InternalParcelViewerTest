@@ -10,155 +10,8 @@
 		<link rel="stylesheet" href="https://js.arcgis.com/calcite-components/3.3.3/calcite.css" />
 		<script src="https://js.arcgis.com/4.34/"></script>
 		<script type="module" src="https://js.arcgis.com/4.34/map-components/"></script>
+		<link rel="stylesheet" href="css/main.css" />
 		<script type="module" src="js/main.js"></script>
-    <style>
-      html, body {
-height: 100%;
-margin: 0;
-background: #1a2b55;
-font-family: "Segoe UI", sans-serif;
-color: #ecf0f1;
-overflow: hidden;
-display: flex;
-flex-direction: column;
-}
-
-:root {
---accent-color: #1c5cff;
---select-button-color: #1c5cffcc;
-}
-
-header {
-background: #0a1e3a;
-color: #fff;
-height: 60px;
-display: flex;
-align-items: center;
-padding: 0 16px;
-gap: 10px;
-font-weight: 600;
-z-index: 2;
-border-bottom: 3px solid var(--accent-color);
-position: relative;
-}
-
-header img {
-height: 32px;
-}
-
-header h2 {
-margin: 0;
-font-size: 1.4em;
-white-space: nowrap;
-}
-
-.header-icon-btn {
-    background: #0e203a;
-    border: 1px solid #1c5cff55;
-    color: white;
-    height: 38px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    margin-left: 12px;
-    transition: 0.15s ease;
-    box-shadow: 0 0 4px #00000066;
-}
-
-.header-icon-btn:hover {
-    background: #1c5cff22;
-    border-color: #1c5cffcc;
-    box-shadow: 0 0 10px #1c5cffaa;
-}
-
-.header-icon-btn:active {
-    transform: scale(0.92);
-}
-
-#ui-container {
-display: flex;
-height: calc(100vh - 60px);
-width: 100%;
-overflow: hidden;
-}
-
-.list-item {
-display: block;
-width: 100%;
-background-color: #34495e;
-margin: 7px 0;
-padding: 2px 10px;
-border-radius: 6px;
-font-size: 13px;
-cursor: pointer;
-transition: background 0.2s ease;
-color: #ecf0f1;
-box-sizing: border-box;
-white-space: nowrap;
-overflow: hidden;
-text-overflow: ellipsis;
-position: relative;
-}
-
-#main-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 0;
-}
-
-.map-panel {
-  flex: 1 1 80%;
-  min-height: 0;
-}
-
-.table-panel {
-  flex: 1 1 20%;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.table-container {
-  height: 100%;
-  overflow: hidden;
-}
-
-#left-sidebar {
-    flex: 0 0 20%;
-}
-
-arcgis-map {
-flex: 1;
-height: 100%;
-width: 100%;
-background-color: #fff;
-}
-
-arcgis-layer-list {
-margin-top: 56px;
-}
-
-arcgis-search {
-position: absolute;
-right: 20px;
-top: 10px;
-z-index: 10;
-}
-
-footer {
-height: 28px;
-background-color: #0a1e3a;
-color: #eee;
-text-align: center;
-line-height: 28px;
-font-size: 12px;
-border-top: 3px solid var(--accent-color);
-z-index: 2;
-}
-    </style>
 	</head>
 
 	<body>
@@ -171,80 +24,81 @@ z-index: 2;
 		</button>
 			</header>
 
-<div id="ui-container">
+	<div id="ui-container">
+		<!-- LEFT SIDEBAR -->
+		<div id="left-sidebar">
 
-  <!-- LEFT SIDEBAR -->
-  <div id="left-sidebar">
+			<!-- SPECIAL TAX DISTRICTS -->
+            <div>
+				<calcite-combobox id="fieldBox" placeholder="Select a field" select-all-enabled selection-display="single">
+						<calcite-combobox-item
+						value="select-all-cid"
+						heading="Select all CID"
+						data-target-group="cid-names">
+						</calcite-combobox-item>
 
-    <!-- SPECIAL TAX DISTRICTS -->
-    <div>
-      <calcite-combobox
-        id="fieldBox"
-        placeholder="Select a field"
-        select-all-enabled
-        selection-display="single">
+						<calcite-combobox-item
+						value="select-all-tdd"
+						heading="Select all TDD"
+						data-target-group="tdd-names">
+						</calcite-combobox-item>
 
-        <calcite-combobox-item
-          value="select-all-cid"
-          heading="Select all CID"
-          data-target-group="cid-names">
-        </calcite-combobox-item>
+						<calcite-combobox-item
+						value="select-all-tifproj"
+						heading="Select all TIF Projects"
+						data-target-group="tifproj-names">
+						</calcite-combobox-item>
 
-        <calcite-combobox-item
-          value="select-all-tdd"
-          heading="Select all TDD"
-          data-target-group="tdd-names">
-        </calcite-combobox-item>
+						<calcite-combobox-item
+						value="select-all-tifplan"
+						heading="Select all TIF Plan Districts"
+						data-target-group="tifplan-names">
+						</calcite-combobox-item>
+					<calcite-combobox-item-group id="cid-names" label="CID"></calcite-combobox-item-group>
+					<calcite-combobox-item-group id="tdd-names" label="TDD"></calcite-combobox-item-group>
+					<calcite-combobox-item-group id="tifproj-names" label="TIF Projects"></calcite-combobox-item-group>
+					<calcite-combobox-item-group id="tifplan-names" label="TIF Plan District"></calcite-combobox-item-group>
+				</calcite-combobox>
+            </div>
+			<!-- Selection List -->
+			<div id="districtselection" class="panel">
+				<h4>Selected Districts</h4>
+				<div id="selectionList"></div>
+			</div>
+		</div>
+        <!-- MAP -->
+		<calcite-panel class="map-panel">
+		<arcgis-map id="map" item-id="715b4ef93362498e97db7393dc2b7d17">
+			<arcgis-layer-list slot="top-right"></arcgis-layer-list>
+		</arcgis-map>
+		</calcite-panel>
+		<!--Table-->
+		<calcite-panel class="table-panel">
+			<div id ="parcelsTable" class="table-container"></div>
+		</calcite-panel>	
 
-        <calcite-combobox-item
-          value="select-all-tifproj"
-          heading="Select all TIF Projects"
-          data-target-group="tifproj-names">
-        </calcite-combobox-item>
+		<!--Functions Button-->
+		<calcite-dialog id="functionsDialog" modal>
+		<h3 slot="heading">Tools & Functions</h3>
+		<div style="padding: 6px;">
+			<calcite-card>
+				<h4 slot="title">Coming Soon</h4>
+				<p slot="subtitle">Additional tools will appear here.</p>
 
-        <calcite-combobox-item
-          value="select-all-tifplan"
-          heading="Select all TIF Plan Districts"
-          data-target-group="tifplan-names">
-        </calcite-combobox-item>
+				<p>
+					This dialog will eventually hold functions like district filters,
+					labeling tools, visibility toggles, and more.
+				</p>
 
-        <calcite-combobox-item-group id="cid-names" label="CID"></calcite-combobox-item-group>
-        <calcite-combobox-item-group id="tdd-names" label="TDD"></calcite-combobox-item-group>
-        <calcite-combobox-item-group id="tifproj-names" label="TIF Projects"></calcite-combobox-item-group>
-        <calcite-combobox-item-group id="tifplan-names" label="TIF Plan District"></calcite-combobox-item-group>
-      </calcite-combobox>
-    </div>
+				<calcite-chip color="blue" outline>
+					Future Feature
+				</calcite-chip>
+			</calcite-card>
+		</div>
 
-    <!-- Selection List -->
-    <div id="districtselection" class="panel">
-      <h4>Selected Districts</h4>
-      <div id="taxList"></div>
-    </div>
-
-  </div>
-
-  <!-- MAIN CONTENT: MAP + TABLE STACKED -->
-  <div id="main-content">
-
-    <!-- MAP -->
-    <calcite-panel class="map-panel">
-      <arcgis-map
-        id="saMap"
-        item-id="715b4ef93362498e97db7393dc2b7d17">
-        <arcgis-layer-list slot="top-right"></arcgis-layer-list>
-      </arcgis-map>
-    </calcite-panel>
-
-    <!-- TABLE
-      <div id="parcelsTable" class="table-container"></div> -->
-      <arcgis-feature-table
-        id="parcelsTable"
-        reference-element="saMap"
-        class="table-container">
-      </arcgis-feature-table>
-
-  </div>
-</div>
+		<calcite-button slot="footer-end" appearance="outline">Close</calcite-button>
+	</calcite-dialog>
+	</div>
 
 		<footer>
 			&copy; 2025 - Jackson County Missouri GIS

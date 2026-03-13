@@ -1,3 +1,4 @@
+// combobox.js
 export async function populateComboboxGroup({ map, layerTitle, fieldName, groupId, valuePrefix }) {
 
   const layer = map.allLayers
@@ -77,12 +78,14 @@ export function attachSelectionListLogic(combobox, selectionList) {
       const parentGroup = item.closest("calcite-combobox-item-group");
       const groupKey = parentGroup?.label || parentGroup?.id || "Ungrouped";
       if (!groupedSelections[groupKey]) groupedSelections[groupKey] = [];
-      groupedSelections[groupKey].push(item.value);
+      groupedSelections[groupKey].push(item.value.split(":")[1]);
     });
 
     Object.entries(groupedSelections).forEach(([groupName, items]) => {
-      const header = document.createElement("h3");
+      const header = document.createElement("div");
       header.textContent = groupName;
+      header.style.fontWeight = "bold";
+      header.style.marginTop = "5px";
       selectionList.appendChild(header);
 
       items.forEach(text => {

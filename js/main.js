@@ -1,3 +1,4 @@
+// Load ArcGIS classes once here
 const [
   Graphic,
   FeatureLayer,
@@ -18,7 +19,6 @@ import { createRegularParcelSearch } from "./searchParcels.js";
 import { populateComboboxGroup, attachSelectAllLogic, attachSelectionListLogic } from "./combobox.js";
 import { attachQueryTableListener } from "./queryTable.js";
 
-
 (async function() {
   const saMap = document.getElementById("saMap");
   const { map, view, parcelLayer } = await initMap(saMap);
@@ -28,7 +28,8 @@ import { attachQueryTableListener } from "./queryTable.js";
   const featureTable = await createFeatureTable({
     view,
     layer: parcelLayer,
-    containerId: "parcelsTable"
+    containerId: "parcelsTable",
+    FeatureTableClass: FeatureTable
   });
 
   const searchEl = document.getElementById("search");
@@ -43,15 +44,19 @@ import { attachQueryTableListener } from "./queryTable.js";
     GraphicClass: Graphic
   });
 
+  // Combobox logic
   await populateComboboxGroup({ map, layerTitle: "CID", fieldName: "Name", groupId: "cid-names", valuePrefix: "CID" });
   await populateComboboxGroup({ map, layerTitle: "TDD", fieldName: "Name", groupId: "tdd-names", valuePrefix: "TDD" });
   await populateComboboxGroup({ map, layerTitle: "TIF Projects", fieldName: "Name", groupId: "tifproj-names", valuePrefix: "TIF_PROJECT" });
   await populateComboboxGroup({ map, layerTitle: "TIF Plan District", fieldName: "Name", groupId: "tifplan-names", valuePrefix: "TIF_PLAN" });
 
   const combobox = document.getElementById("fieldBox");
-  const selectionList = document.getElementById("taxList");
+  const selectionList = document.getElementById("selectionList");
   attachSelectAllLogic(combobox);
   attachSelectionListLogic(combobox, selectionList);
-  attachQueryTableListener(combobox, featureTable, parcelLayer, view);
+  attachQueryTableListener(combobox, featureTable);
 
+  const functionsButton = document.getElementById("functionsButton");
+  const functionsDialog = document.getElementById("functionsDialog");
+  functionsButton.addEventListener("click", () => { functionsDialog.open = true; });
 })();
