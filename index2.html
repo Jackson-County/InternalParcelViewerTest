@@ -119,7 +119,7 @@
 			width: 500px;
 			background: #0a1e3a;
 			color: white;
-			display: flex;
+			display: none;
 			flex-direction: column;
 			padding: 10px;
 			gap: 12px;
@@ -1441,10 +1441,11 @@
 					if(selectedParcelContent2d) selectedParcelContent2d.appendChild(buildRow());
 					if(selectedParcelContent3d) selectedParcelContent3d.appendChild(buildRow());
 					document.getElementById("right-sidebar").innerHTML = "<iframe src='https://jcgis.jacksongov.org/parcelquerylite/results.aspx?parID=" + name + "' style='border:0;width:100%;height:100%;'></iframe>";
-				
+					
 				});
 
 				updateSelectedParcelBadge();
+				document.getElementById("right-sidebar").style.display = "flex";
 			}
 
 			function syncParcelListSelection()
