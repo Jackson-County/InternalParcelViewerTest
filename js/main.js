@@ -4,7 +4,7 @@ const [
   FeatureLayer,
   SearchSource,
   FeatureFilter,
-  reactiveUtils
+  reactiveUtils,
 ] = await $arcgis.import([
   "@arcgis/core/Graphic.js",
   "@arcgis/core/layers/FeatureLayer.js",
@@ -28,8 +28,7 @@ import { attachQueryTableListener } from "./queryTable.js";
   const featureTable = await createFeatureTable({
     view,
     layer: parcelLayer,
-    containerId: "parcelsTable",
-    FeatureTableClass: FeatureTable
+    containerId: "parcelsTable"
   });
 
   const searchEl = document.getElementById("search");

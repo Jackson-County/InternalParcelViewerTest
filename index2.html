@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
 	<meta charset="utf-8" />
@@ -97,9 +97,9 @@
 			overflow: hidden;
 		}
 
-			.app-page.visible {
-				display: flex;
-			}
+		.app-page.visible {
+			display: flex;
+		}
 
 		/* Sidebar */
 		#left-sidebar {
@@ -113,8 +113,8 @@
 			border-right: 3px solid #122f57;
 			overflow: hidden;
 			z-index: 10;
+			
 		}
-		/* contains Tyler parcel info - just an i-frame with link to property info web page */
 		#right-sidebar {
 			width: 500px;
 			background: #0a1e3a;
@@ -135,18 +135,13 @@
 			min-height: 0;
 		}
 
-			.panel h3 {
-				margin: 0 0 8px 0;
-				padding-bottom: 4px;
-				border-bottom: 1px solid #2f6df2;
-				font-size: 15px;
-			}
-		#taxPanel {
-			display: flex;
-			flex-direction: column;
-			flex: 1 1 auto;
-			min-height: 0;
+		.panel h3 {
+			margin: 0 0 8px 0;
+			padding-bottom: 4px;
+			border-bottom: 1px solid #2f6df2;
+			font-size: 15px;
 		}
+
 		#buildingSearch, #parcelSearch {
 			width: 90%;
 			padding: 6px 8px;
@@ -262,24 +257,6 @@
 			pointer-events: auto;
 		}
 
-
-		/* Selected parcels floating panel */
-		#selectedParcelList {
-			width: 320px;
-			background-color: #1a2b55;
-			color: white;
-			border-radius: 8px;
-			padding: 10px;
-			box-shadow: 0 0 7px 0.5px var(--select-button-color);
-			font-size: 13px;
-			position: absolute;
-			right: 20px;
-			display: none;
-			gap: 10px;
-			bottom: 60px;
-			z-index: 20;
-		}
-
 		.selected-parcel-item {
 			display: flex;
 			justify-content: space-between;
@@ -302,12 +279,11 @@
 			font-size: 12px;
 		}
 
-		#launchSurveyButton {
+		#launchSurveyButton3d, #launchSurveyButton2d {
 			background-color: var(--accent-color);
 			border: none;
-			padding: 6px 10px;
-			margin-top: 10px;
-			border-radius: 4px;
+			padding: 10px 12px;
+			border-radius: 6px;
 			color: white;
 			cursor: pointer;
 			font-weight: bold;
@@ -370,6 +346,7 @@
 		}
 
 
+
 		.header-tab calcite-icon {
 			transform: scale(0.9);
 		}
@@ -401,25 +378,26 @@
 			align-items: center;
 			justify-content: center;
 			gap: 4px;
-			background: #fff; 
+			background: #fff; /* ✅ white like basemap switcher */
 			color: #2b2b2b;
-			border: 1px solid #d9d9d9; 
+			border: 1px solid #d9d9d9; /* ✅ light gray border */
 			border-radius: 10px;
+			box-shadow: 0 1px 3px rgba(0,0,0,0.22); /* ✅ subtle */
 			cursor: pointer;
 			transition: 120ms ease;
 		}
 
-			.view-toggle-fab:hover {
-				background: #f6f6f6;
-				box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-				transform: translateY(-1px);
-			}
+		.view-toggle-fab:hover {
+			background: #f6f6f6;
+			box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+			transform: translateY(-1px);
+		}
 
-			.view-toggle-fab:active {
-				transform: scale(0.97);
-			}
+		.view-toggle-fab:active {
+			transform: scale(0.97);
+		}
 
-
+		/* icon color like calcite action icons */
 		#viewToggleFabIcon {
 			color: #4a4a4a;
 		}
@@ -440,39 +418,35 @@
 			scroll-behavior: smooth;
 		}
 
-			/* Chrome / Edge / Safari */
-			#buildingList::-webkit-scrollbar,
-			#floorList::-webkit-scrollbar,
-			#parcelList::-webkit-scrollbar,
-			#taxList::-webkit-scrollbar {
-				width: 10px;
-			}
+		/* Chrome / Edge / Safari */
+		#buildingList::-webkit-scrollbar,
+		#floorList::-webkit-scrollbar,
+		#parcelList::-webkit-scrollbar {
+			width: 10px;
+		}
 
-			#buildingList::-webkit-scrollbar-track,
-			#floorList::-webkit-scrollbar-track,
-			#parcelList::-webkit-scrollbar-track,
-			#taxList::-webkit-scrollbar-track {
-				background: rgba(0,0,0,0.18);
-				border-left: 1px solid rgba(28,92,255,0.15);
-				border-radius: 999px;
-			}
+		#buildingList::-webkit-scrollbar-track,
+		#floorList::-webkit-scrollbar-track,
+		#parcelList::-webkit-scrollbar-track {
+			background: rgba(0,0,0,0.18);
+			border-left: 1px solid rgba(28,92,255,0.15);
+			border-radius: 999px;
+		}
 
-			#buildingList::-webkit-scrollbar-thumb,
-			#floorList::-webkit-scrollbar-thumb,
-			#parcelList::-webkit-scrollbar-thumb,
-			#taxList::-webkit-scrollbar-thumb {
-				background: linear-gradient(180deg, rgba(28,92,255,0.95), rgba(118,202,251,0.85) );
-				border-radius: 999px;
-				border: 2px solid rgba(10,30,58,0.85);
-				box-shadow: 0 0 10px rgba(28,92,255,0.55);
-			}
+		#buildingList::-webkit-scrollbar-thumb,
+		#floorList::-webkit-scrollbar-thumb,
+		#parcelList::-webkit-scrollbar-thumb {
+			background: linear-gradient(180deg, rgba(28,92,255,0.95), rgba(118,202,251,0.85) );
+			border-radius: 999px;
+			border: 2px solid rgba(10,30,58,0.85);
+			box-shadow: 0 0 10px rgba(28,92,255,0.55);
+		}
 
-				#buildingList::-webkit-scrollbar-thumb:hover,
-				#floorList::-webkit-scrollbar-thumb:hover,
-				#parcelList::-webkit-scrollbar-thumb:hover,
-				#taxList::-webkit-scrollbar-thumb:hover {
-					box-shadow: 0 0 16px rgba(28,92,255,0.85);
-				}
+		#buildingList::-webkit-scrollbar-thumb:hover,
+		#floorList::-webkit-scrollbar-thumb:hover,
+		#parcelList::-webkit-scrollbar-thumb:hover {
+			box-shadow: 0 0 16px rgba(28,92,255,0.85);
+		}
 
 		/* Firefox */
 		#buildingList, #floorList, #parcelList, #taxList {
@@ -487,22 +461,215 @@
 			line-height: 1.05;
 		}
 
-			.title-stack h2 {
-				margin: 0;
-				font-size: 1.4em;
-			}
+		.title-stack h2 {
+			margin: 0;
+			font-size: 1.4em;
+		}
 
-			/* INTERNAL subtitle: subtle accent neon (no glass/shimmer) */
-			.title-stack .subtitle {
-				margin-top: 2px;
-				font-size: 12px;
-				font-style: italic;
-				font-weight: 700;
-				letter-spacing: 0.45px;
-				color: #18daed;
-				/* subtle neon */
-				text-shadow: 0 0 4px color-mix(in srgb, #18daed 45%, transparent), 0 0 10px color-mix(in srgb, var(--accent-color) 22%, transparent);
-			}
+		/* INTERNAL subtitle: subtle accent neon (no glass/shimmer) */
+		.title-stack .subtitle {
+			margin-top: 2px;
+			font-size: 12px;
+			font-style: italic;
+			font-weight: 700;
+			letter-spacing: 0.45px;
+			color: #18daed;
+			/* subtle neon */
+			text-shadow: 0 0 4px color-mix(in srgb, #18daed 45%, transparent), 0 0 10px color-mix(in srgb, var(--accent-color) 22%, transparent);
+		}
+
+
+
+		.selected-parcel-fab {
+			position: relative;
+			width: 52px;
+			height: 52px;
+			border-radius: 12px;
+			border: 1px solid #d9d9d9;
+			background: #ffffff;
+			color: #2b2b2b;
+			box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+			cursor: pointer;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+
+		.selected-parcel-fab:hover {
+			background: #f6f6f6;
+		}
+
+		.selected-parcel-badge {
+			position: absolute;
+			top: -8px;
+			right: -8px;
+			min-width: 22px;
+			height: 22px;
+			padding: 0 6px;
+			border-radius: 999px;
+			background: #d10000;
+			color: #ffffff;
+			font-size: 12px;
+			font-weight: 800;
+			line-height: 22px;
+			text-align: center;
+			box-shadow: 0 0 8px rgba(209,0,0,0.5);
+			display: none;
+		}
+
+		.selected-parcel-panel {
+			width: 420px;
+			max-width: min(92vw, 420px);
+			max-height: 65vh;
+			background-color: #1a2b55;
+			color: white;
+			border-radius: 12px;
+			box-shadow: 0 0 10px 1px var(--select-button-color);
+			border: 1px solid var(--accent-color);
+			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+		}
+
+		.selected-parcel-badge-inline {
+			min-width: 22px;
+			height: 22px;
+			padding: 0 6px;
+			border-radius: 999px;
+			background: #d10000;
+			color: #ffffff;
+			font-size: 12px;
+			font-weight: 800;
+			line-height: 22px;
+			text-align: center;
+			box-shadow: 0 0 8px rgba(209,0,0,0.5);
+			display: inline-block;
+			margin-left: 8px;
+		}
+
+		#selectedParcelContent {
+			padding: 10px;
+			overflow-y: auto;
+			max-height: 46vh;
+		}
+
+		#selectedParcelList {
+			position: absolute;
+			right: 0;
+			bottom: 64px;
+			width: 420px;
+			max-height: 65vh;
+			background-color: #1a2b55;
+			color: white;
+			border-radius: 12px;
+			box-shadow: 0 0 10px 1px var(--select-button-color);
+			border: 1px solid var(--accent-color);
+			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+		}
+
+		.selected-parcel-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding: 12px 12px 10px 12px;
+			border-bottom: 1px solid rgba(255,255,255,0.14);
+			background: #10294a;
+		}
+
+		.selected-parcel-title {
+			font-size: 15px;
+			font-weight: 800;
+		}
+
+		.selected-parcel-header-buttons {
+			display: flex;
+			gap: 8px;
+		}
+
+		.selected-header-btn {
+			border: 1px solid rgba(255,255,255,0.25);
+			background: #0e203a;
+			color: white;
+			padding: 6px 10px;
+			border-radius: 6px;
+			cursor: pointer;
+			font-size: 12px;
+			font-weight: 700;
+		}
+
+		.selected-header-btn:hover {
+				background: #16345d;
+		}
+
+		#selectedParcelContent {
+			padding: 10px;
+			overflow-y: auto;
+			max-height: 46vh;
+		}
+
+		.selected-parcel-item {
+			display: block;
+			box-shadow: 0 0 6px 2px var(--select-button-color);
+			font-weight: bold;
+			border: 1px solid var(--accent-color);
+			padding: 8px 10px;
+			margin-bottom: 8px;
+			border-radius: 8px;
+			background: rgba(255,255,255,0.03);
+		}
+
+		.selected-parcel-footer {
+			padding: 10px 12px 12px 12px;
+			border-top: 1px solid rgba(255,255,255,0.14);
+			background: #10294a;
+		}
+
+		
+
+		#selectedParcelExpand::part(icon-number) {
+			background-color: #d10000;
+			color: #ffffff;
+			font-weight: 800;
+			border-radius: 999px;
+			box-shadow: 0 0 8px rgba(209, 0, 0, 0.5);
+		}
+
+		.expand-with-label {
+			position: relative;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+		}
+
+		.expand-label {
+			margin-top: 4px;
+			font-size: 11px;
+			font-weight: 700;
+			color: #ffffff;
+			text-shadow: 0 0 6px rgba(0,0,0,0.7);
+			pointer-events: none;
+		}
+
+		/* header is 60px tall, so let the suggestion box use the rest of the screen */
+		arcgis-search {
+			--search-suggestions-max-height: calc(100vh - 70px);
+		}
+
+		/* ArcGIS search dropdown */
+		arcgis-search::part(menu) {
+			max-height: calc(100vh - 70px);
+			overflow-y: auto;
+		}
+
+		/* keep it above the map */
+		arcgis-search::part(menu),
+		calcite-popover,
+		calcite-dropdown {
+			z-index: 5000 !important;
+		}
+
 	</style>
 </head>
 
@@ -565,8 +732,6 @@
 					<calcite-icon id="viewToggleFabIcon" icon="globe" scale="m"></calcite-icon>
 					<div id="viewToggleFabText" class="view-toggle-fab-text">2D</div>
 				</button>
-
-
 				<arcgis-map id="map2d" class="view-element visible" item-id="0561cabf74ff48a4af41d3130fd103d9">
 					<arcgis-expand slot="top-right" mode="floating" visual-scale="l">
 						<arcgis-basemap-gallery></arcgis-basemap-gallery>
@@ -574,6 +739,32 @@
 					<arcgis-expand slot="top-right" mode="floating" visual-scale="l">
 						<arcgis-layer-list drag-enabled></arcgis-layer-list>
 					</arcgis-expand>
+					<div class="expand-with-label" slot="bottom-right">
+						<arcgis-expand id="selectedParcelExpand2d"
+									slot="bottom-right"
+									mode="floating"
+									visual-scale="l"
+									expand-icon="add-layer"
+									icon-number="0"
+									tooltip="Selected Parcels">
+							<div id="selectedParcelList2d" class="selected-parcel-panel">
+								<div class="selected-parcel-header">
+									<div class="selected-parcel-title">
+										Selected Parcels
+										<span id="selectedParcelBadge2d" class="selected-parcel-badge-inline">0</span>
+									</div>
+									<div class="selected-parcel-header-buttons">
+										<button id="clearSelectedParcelsButton2d" class="selected-header-btn">Clear All</button>
+									</div>
+								</div>
+								<div id="selectedParcelContent2d"></div>
+								<div class="selected-parcel-footer">
+									<button id="launchSurveyButton2d">Launch Survey123</button>
+								</div>
+							</div>
+						</arcgis-expand>
+						<div class="expand-label">LRM</div>
+					</div>
 				</arcgis-map>
 				<arcgis-scene id="scene" class="view-element" item-id="f45587ca1ccb4d918269be01c1428698" environment="lighting: 'sunny'">
 					<arcgis-expand slot="top-right" mode="floating" visual-scale="l">
@@ -582,18 +773,39 @@
 					<arcgis-expand slot="top-right" mode="floating" visual-scale="l">
 						<arcgis-layer-list drag-enabled></arcgis-layer-list>
 					</arcgis-expand>
+					<div class="expand-with-label" slot="bottom-right">
+						<arcgis-expand id="selectedParcelExpand3d"
+									slot="bottom-right"
+									mode="floating"
+									visual-scale="l"
+									expand-icon="add-layer"
+									icon-number="0"
+									tooltip="Selected Parcels">
+							<div id="selectedParcelList3d" class="selected-parcel-panel">
+								<div class="selected-parcel-header">
+									<div class="selected-parcel-title">
+										Selected Parcels
+										<span id="selectedParcelBadge3d" class="selected-parcel-badge-inline">0</span>
+									</div>
+									<div class="selected-parcel-header-buttons">
+										<button id="clearSelectedParcelsButton3d" class="selected-header-btn">Clear All</button>
+									</div>
+								</div>
+
+								<div id="selectedParcelContent3d"></div>
+
+								<div class="selected-parcel-footer">
+									<button id="launchSurveyButton3d">Launch Survey123</button>
+								</div>
+							</div>
+						</arcgis-expand>
+						<div class="expand-label">LRM</div>
+					</div>
 				</arcgis-scene>
-			</div>
-			
+		</div>
 		<div id="right-sidebar">
 			<!-- Tyler data will go in here -->
 		</div>
-
-			<div id="selectedParcelList">
-				<h3>Selected Parcels</h3>
-				<div id="selectedParcelContent"></div>
-				<button id="launchSurveyButton">Launch Survey123</button>
-			</div>
 		</div>
 
 		<!-- PUBLIC WORKS PAGE-->
@@ -687,7 +899,7 @@
 								<li>Export data from feature table</li>
 							</ul>
 						</calcite-card>
-					</arcgis-expand>
+					</arcgis-expand>					
 				</arcgis-map>
 				<arcgis-feature-table
 					id="parcelsTable"
@@ -735,6 +947,22 @@
 			const publicWorksTabBtn=document.getElementById("publicWorksTab");
 			const specialAssessTabBtn=document.getElementById("specialAssessTab");
 
+			// selected parcel expands
+			const selectedParcelExpand2d=document.getElementById("selectedParcelExpand2d");
+			const selectedParcelExpand3d=document.getElementById("selectedParcelExpand3d");
+
+			const selectedParcelBadge2d=document.getElementById("selectedParcelBadge2d");
+			const selectedParcelBadge3d=document.getElementById("selectedParcelBadge3d");
+
+			const selectedParcelContent2d=document.getElementById("selectedParcelContent2d");
+			const selectedParcelContent3d=document.getElementById("selectedParcelContent3d");
+
+			const clearSelectedParcelsButton2d=document.getElementById("clearSelectedParcelsButton2d");
+			const clearSelectedParcelsButton3d=document.getElementById("clearSelectedParcelsButton3d");
+
+			const launchBtn2d=document.getElementById("launchSurveyButton2d");
+			const launchBtn3d=document.getElementById("launchSurveyButton3d");
+
 			const pageParcel=document.getElementById("page-parcel");
 			const pagePW=document.getElementById("page-pw");
 			const pageSA=document.getElementById("page-sa");
@@ -754,6 +982,9 @@
 			const sceneView=sceneEl.view;
 			const mapView=mapEl.view;
 			let ESRILayer=null;
+			let lrmLayer2d=null;
+			let lrmLayer3d=null;
+
 
 
 			// Start in 3D
@@ -795,6 +1026,70 @@
 			// ---- Lazy-load PW/SA maps (hidden containers start at 0x0)
 			let pwLoaded=false;
 			let saLoaded=false;
+			function openSelectedParcelPanel()
+			{
+				if(selectedParcelExpandEl) selectedParcelExpandEl.expanded=true;
+			}
+
+			function closeSelectedParcelPanel()
+			{
+				if(selectedParcelExpandEl) selectedParcelExpandEl.expanded=false;
+			}
+
+			function clearAllSelectedParcels()
+			{
+				selectedParcels.length=0;
+
+				highlightedParcels.forEach(handle =>
+				{
+					try { handle.remove(); } catch { }
+				});
+				highlightedParcels.clear();
+
+				updateSelectedPanel();
+				syncParcelListSelection();
+
+				Array.from(parcelListEl.querySelectorAll(".parcel-list-item"))
+					.forEach(div => div.classList.remove("selected"));
+			}
+
+			/*clearSelectedParcelsButton.addEventListener("click",() =>
+			{
+				clearAllSelectedParcels();
+			});*/
+			clearSelectedParcelsButton2d?.addEventListener("click",clearAllSelectedParcels);
+			clearSelectedParcelsButton3d?.addEventListener("click",clearAllSelectedParcels);
+
+
+			function updateSelectedParcelBadge()
+			{
+				const count=selectedParcels.length;
+				const text=count>99? "99+":String(count);
+
+				if(selectedParcelBadge2d)
+				{
+					selectedParcelBadge2d.textContent=text;
+					selectedParcelBadge2d.style.display=count>0? "inline-block":"none";
+				}
+
+				if(selectedParcelBadge3d)
+				{
+					selectedParcelBadge3d.textContent=text;
+					selectedParcelBadge3d.style.display=count>0? "inline-block":"none";
+				}
+
+				if(selectedParcelExpand2d)
+				{
+					selectedParcelExpand2d.setAttribute("icon-number",count>0? text:"0");
+				}
+
+				if(selectedParcelExpand3d)
+				{
+					selectedParcelExpand3d.setAttribute("icon-number",count>0? text:"0");
+				}
+			}
+
+
 
 			async function ensureMapLoaded(mapId,flagName)
 			{
@@ -862,7 +1157,15 @@
 				activeView=mapView;
 				updateFabIcon();
 				await refreshLayerRefs();
+				const wasOpen=selectedParcelExpand3d?.expanded;
+
+				selectedParcelExpand2d.expanded=wasOpen;
+				selectedParcelExpand3d.expanded=false;
+				syncLrmLayerWithExpand();
 			}
+
+
+
 
 			async function switchTo3D()
 			{
@@ -879,6 +1182,11 @@
 				activeView=sceneView;
 				updateFabIcon();
 				await refreshLayerRefs();
+				const wasOpen=selectedParcelExpand2d?.expanded;
+
+				selectedParcelExpand3d.expanded=wasOpen;
+				selectedParcelExpand2d.expanded=false;
+				syncLrmLayerWithExpand();
 			}
 
 			viewToggleFab.addEventListener("click",async () =>
@@ -911,6 +1219,13 @@
 			let regularParcelLayer=null; // from 2D map
 			let parcelLayer=null;
 			let floorLayer=null;
+			let KansasCityLayer=null;
+			let MissouriLayer=null;
+			let MajorCitiesLayer=null;
+			let JacksonCountyMaskLayer=null;
+			let ParcelCondominiumsFloors3DLayer=null;
+			let addressLayer2d=null;
+			let addressLayer3d=null;
 
 			// ---- LayerViews
 			let parcelLayerView=null;
@@ -923,6 +1238,31 @@
 				floorLayer=sceneView.map?.allLayers?.find(l => l.title==="Parcel Condominiums Floors")||null;
 				ESRILayer=sceneView.map?.allLayers?.find(l => l.title==="Esri 3D Buildings")||null;
 				regularParcelLayer=mapView.map?.allLayers?.find(l => l.title==="Parcels")||null;
+
+				KansasCityLayer=sceneView.map?.allLayers?.find(l => l.title==="Kansas City")||null;
+				MissouriLayer=sceneView.map?.allLayers?.find(l => l.title==="Missouri")||null;
+				MajorCitiesLayer=sceneView.map?.allLayers?.find(l => l.title==="Major Cities")||null;
+				JacksonCountyMaskLayer=sceneView.map?.allLayers?.find(l => l.title==="Jackson County Mask")||null;
+				ParcelCondominiumsFloors3DLayer=sceneView.map?.allLayers?.find(l => l.title==="Parcel Condominiums Floors 3D")||null;
+				addressLayer2d=mapView.map?.allLayers?.find(l => l.title==="Addresses")||null;
+				addressLayer3d=sceneView.map?.allLayers?.find(l => l.title==="Addresses")||null;
+
+				lrmLayer2d=mapView.map?.allLayers?.find(l => l.title==="Land Records Change Request")||null;
+				lrmLayer3d=sceneView.map?.allLayers?.find(l => l.title==="Land Records Change Request")||null;
+
+				if(lrmLayer2d) await lrmLayer2d.load();
+				if(lrmLayer3d) await lrmLayer3d.load();
+
+				if(addressLayer2d) await addressLayer2d.load();
+				if(addressLayer3d) await addressLayer3d.load();
+
+				[KansasCityLayer,MissouriLayer, MajorCitiesLayer,JacksonCountyMaskLayer,ESRILayer,condoLayer,floorLayer,ParcelCondominiumsFloors3DLayer].forEach(layer =>
+				{
+					if(layer)
+					{
+						layer.listMode="hide";
+					}
+				});
 
 				if(condoLayer) await condoLayer.load();
 				if(floorLayer) await floorLayer.load();
@@ -949,8 +1289,11 @@
 			function clearSelectedParcels()
 			{
 				selectedParcels.length=0;
-				selectedParcelContentEl.innerHTML="";
-				document.getElementById("selectedParcelList").style.display="none";
+
+				if(selectedParcelContent2d) selectedParcelContent2d.innerHTML="";
+				if(selectedParcelContent3d) selectedParcelContent3d.innerHTML="";
+
+				updateSelectedParcelBadge();
 			}
 
 			function clearHighlightsAndSets()
@@ -960,6 +1303,16 @@
 					try { handle.remove(); } catch { }
 				});
 				highlightedParcels.clear();
+			}
+
+			function syncLrmLayerWithExpand()
+			{
+				const isOpen=
+					!!selectedParcelExpand2d?.expanded||
+					!!selectedParcelExpand3d?.expanded;
+
+				if(lrmLayer2d) lrmLayer2d.visible=isOpen;
+				if(lrmLayer3d) lrmLayer3d.visible=isOpen;
 			}
 
 			function restoreBuildingListVisibility()
@@ -987,14 +1340,14 @@
 				return feature?.layer?.title==="Parcels";
 			}
 
-			function isCondo3DParcel(feature)
-			{
-				return feature?.layer?.title==="Parcel Condominiums"||feature?.layer?.title==="Parcel Condominiums Floors";
-			}
-
 			function getParcelDisplayName(feature)
 			{
 				return feature?.attributes?.Name||"Unknown Parcel";
+			}
+
+			function isCondo3DParcel(feature)
+			{
+				return feature?.layer?.title==="Parcel Condominiums Floors";
 			}
 
 			function getHighlightLayerViewForFeature(feature)
@@ -1045,46 +1398,82 @@
 
 			function updateSelectedPanel()
 			{
-				selectedParcelContentEl.innerHTML="";
+				if(selectedParcelContent2d) selectedParcelContent2d.innerHTML="";
+				if(selectedParcelContent3d) selectedParcelContent3d.innerHTML="";
 
 				selectedParcels.forEach(f =>
 				{
 					const selectionKey=getSelectionKey(f);
 					const name=getParcelDisplayName(f);
 
-					const div=document.createElement("div");
-					div.className="selected-parcel-item";
-					div.innerHTML=`<span>${name}</span><button class="remove-button">✖</button>`;
-
-					div.querySelector(".remove-button").onclick=async () =>
+					function buildRow()
 					{
-						const idx=selectedParcels.findIndex(x => getSelectionKey(x)===selectionKey);
-						if(idx>=0) selectedParcels.splice(idx,1);
+						const div=document.createElement("div");
+						div.className="selected-parcel-item";
+						div.innerHTML=`
+				<span>${name}</span>
+				<button class="remove-button">✖</button>
+			`;
 
-						const handle=highlightedParcels.get(selectionKey);
-						if(handle)
+						div.querySelector(".remove-button").onclick=() =>
 						{
-							try { handle.remove(); } catch { }
-							highlightedParcels.delete(selectionKey);
-						}
+							const idx=selectedParcels.findIndex(
+								x => getSelectionKey(x)===selectionKey
+							);
 
-						updateSelectedPanel();
+							if(idx>=0) selectedParcels.splice(idx,1);
 
-						if(selectedParcels.length===0)
-						{
-							document.getElementById("selectedParcelList").style.display="none";
-						}
-					};
+							const handle=highlightedParcels.get(selectionKey);
+							if(handle)
+							{
+								try { handle.remove(); } catch { }
+								highlightedParcels.delete(selectionKey);
+							}
 
-					selectedParcelContentEl.appendChild(div);
-					
-					//29-220-49-15-00-0-20-007
-					//29-220-49-15-00-0-12-008
+							updateSelectedPanel();
+							syncParcelListSelection();
+							updateSelectedParcelBadge();
+						};
+
+						return div;
+					}
+
+					if(selectedParcelContent2d) selectedParcelContent2d.appendChild(buildRow());
+					if(selectedParcelContent3d) selectedParcelContent3d.appendChild(buildRow());
 					document.getElementById("right-sidebar").innerHTML = "<iframe src='https://jcgis.jacksongov.org/parcelquerylite/results.aspx?parID=" + name + "' style='border:0;width:100%;height:100%;'></iframe>";
+				
 				});
 
-				document.getElementById("selectedParcelList").style.display=
-					selectedParcels.length? "block":"none";
+				updateSelectedParcelBadge();
+			}
+
+			function syncParcelListSelection()
+			{
+				const selectedKeys=new Set(
+					selectedParcels.map(f => getSelectionKey(f))
+				);
+
+				Array.from(parcelListEl.querySelectorAll(".parcel-list-item"))
+					.forEach(div =>
+					{
+						const name=div.dataset.name;
+
+						const match=selectedParcels.find(f =>
+							getParcelDisplayName(f)===name
+						);
+
+						if(match)
+						{
+							div.classList.toggle(
+								"selected",
+								selectedKeys.has(getSelectionKey(match))
+							);
+						}
+						else
+						{
+							div.classList.remove("selected");
+						}
+					});
 			}
 
 			async function toggleParcelSelection(feature)
@@ -1092,7 +1481,9 @@
 				if(!feature) return;
 
 				const selectionKey=getSelectionKey(feature);
-				const alreadySelectedIndex=selectedParcels.findIndex(f => getSelectionKey(f)===selectionKey);
+				const alreadySelectedIndex=selectedParcels.findIndex(
+					f => getSelectionKey(f)===selectionKey
+				);
 
 				if(alreadySelectedIndex>=0)
 				{
@@ -1122,6 +1513,7 @@
 				}
 
 				updateSelectedPanel();
+				syncParcelListSelection();
 			}
 
 			// ---- Building list (3D-only source)
@@ -1447,6 +1839,20 @@
 					return;
 				}
 
+				const safeFloorWhere=selectedFloorNums
+					.map(fn => `FloorNameDesignator = '${String(fn).replace(/'/g,"''")}'`)
+					.join(" OR ");
+
+				const whereClause=`${currentBuildingWhere} AND (${safeFloorWhere})`;
+
+				const floorRes=await floorLayer.queryFeatures({
+					where: whereClause,
+					outFields: ["*"],
+					returnGeometry: true
+				});
+
+				const floorFeatures=floorRes.features||[];
+
 				selectedFloorNums.forEach(fn =>
 				{
 					const headerDiv=document.createElement("div");
@@ -1456,7 +1862,7 @@
 					headerDiv.textContent="Floor "+fn;
 					parcelListEl.appendChild(headerDiv);
 
-					const parcels=allFeaturesForBuilding.filter(f => f.attributes.FloorNameDesignator==fn);
+					const parcels=floorFeatures.filter(f => f.attributes.FloorNameDesignator==fn);
 
 					parcels.forEach(p =>
 					{
@@ -1465,14 +1871,10 @@
 						divP.textContent=p.attributes.Name;
 						divP.dataset.name=p.attributes.Name;
 
-						// ✅ Use it inside your parcel-list click:
 						divP.onclick=async () =>
 						{
 							await switchTo3D();
 							await toggleParcelSelection(p);
-
-							const isNowSelected=selectedParcels.some(f => getSelectionKey(f)===getSelectionKey(p));
-							divP.classList.toggle("selected",isNowSelected);
 						};
 
 						parcelListEl.appendChild(divP);
@@ -1490,6 +1892,8 @@
 						child.style.display=child.textContent.toLowerCase().includes(filter)? "":"none";
 					});
 				};
+
+				syncParcelListSelection();
 			}
 
 			// ---- Click selection on active view (still checks condo layer)
@@ -1506,10 +1910,7 @@
 					{
 						const result=hit.results.find(r =>
 							r.graphic?.layer&&
-							(
-								r.graphic.layer===floorLayer||
-								r.graphic.layer===condoLayer
-							)
+							r.graphic.layer===floorLayer
 						);
 
 						if(!result) return;
@@ -1551,59 +1952,23 @@
 			attachViewClickHandler(sceneView);
 			attachViewClickHandler(mapView);
 
-			// ---- Search sources (two pathways)  (unchanged logic)
-			const condoSearchSource=new SearchSource({
-				name: "Condominiums",
-				placeholder: "Search Condo Parcel (Name)",
-				getSuggestions: async (params) =>
-				{
-					if(!condoLayer) return [];
-					const term=(params.suggestTerm||"").replace(/'/g,"''");
-
-					const res=await condoLayer.queryFeatures({
-						where: `UPPER(Name) LIKE UPPER('%${term}%')`,
-						outFields: ["OBJECTID","Name"],
-						returnGeometry: false
-					});
-
-					return res.features.map(f => ({
-						key: f.attributes.OBJECTID,
-						text: f.attributes.Name,
-						sourceIndex: params.sourceIndex
-					}));
-				},
-				getResults: async (params) =>
-				{
-					if(!condoLayer) return [];
-					const oid=params?.suggestResult?.key;
-					if(oid==null) return [];
-
-					const res=await condoLayer.queryFeatures({
-						where: `OBJECTID = ${oid}`,
-						outFields: ["*"],
-						returnGeometry: true
-					});
-
-					return res.features.map(f => ({
-						name: f.attributes.Name,
-						feature: f,
-						isCondo: true
-					}));
-				}
-			});
-
 			const regularSearchSource=new SearchSource({
 				name: "Parcels",
-				placeholder: "Search Regular Parcel (Name)",
+				placeholder: "Search Parcel Number",
+				maxSuggestions: 10,
+				maxResults: 10,
 				getSuggestions: async (params) =>
 				{
 					if(!regularParcelLayer) return [];
-					const term=(params.suggestTerm||"").replace(/'/g,"''");
+					const term=(params.suggestTerm||"").trim().replace(/'/g,"''");
+					if(term.length<2) return [];
 
 					const res=await regularParcelLayer.queryFeatures({
-						where: `UPPER(Name) LIKE UPPER('%${term}%')`,
+						where: `UPPER(Name) LIKE UPPER('${term}%')`,
 						outFields: ["OBJECTID","Name"],
-						returnGeometry: false
+						returnGeometry: false,
+						orderByFields: ["Name ASC"],
+						num: 10
 					});
 
 					return res.features.map(f => ({
@@ -1627,12 +1992,111 @@
 					return res.features.map(f => ({
 						name: f.attributes.Name,
 						feature: f,
-						isCondo: false
+						searchType: "parcel"
+					}));
+				}
+			});
+			
+
+			const addressSearchSource=new SearchSource({
+				name: "Addresses",
+				placeholder: "Search Address",
+				maxSuggestions: 10,
+				maxResults: 10,
+				getSuggestions: async (params) =>
+				{
+					const activeAddressLayer=activeView===sceneView? addressLayer3d:addressLayer2d;
+					if(!activeAddressLayer) return [];
+					const term=(params.suggestTerm||"").replace(/'/g,"''");
+
+					const res=await activeAddressLayer.queryFeatures({
+						where: `UPPER(FULLADDR) LIKE UPPER('%${term}%')`,
+						outFields: ["OBJECTID","FULLADDR","MUNICIPALITY","StateAbbrv","ZIP"],
+						returnGeometry: false
+					});
+
+					return res.features
+						.slice(0,10)
+						.map(f => ({
+							key: f.attributes.OBJECTID,
+							text: f.attributes.FULLADDR,
+							sourceIndex: params.sourceIndex
+						}));
+				},
+				getResults: async (params) =>
+				{
+					const activeAddressLayer=activeView===sceneView? addressLayer3d:addressLayer2d;
+					if(!activeAddressLayer) return [];
+
+					const oid=params?.suggestResult?.key;
+					if(oid==null) return [];
+
+					const res=await activeAddressLayer.queryFeatures({
+						where: `OBJECTID = ${oid}`,
+						outFields: ["*"],
+						returnGeometry: true
+					});
+
+					return res.features
+						.slice(0,10)
+						.map(f => ({
+							name: f.attributes.FULLADDR,
+							feature: f,
+							searchType: "address"
+						}));
+				}
+			});
+
+			const condoSearchSource=new SearchSource({
+				name: "Condominiums",
+				placeholder: "Search Condo Parcel",
+				maxSuggestions: 10,
+				maxResults: 10,
+				getSuggestions: async (params) =>
+				{
+					if(!floorLayer) return [];
+					const term=(params.suggestTerm||"").trim().replace(/'/g,"''");
+					if(term.length<2) return [];
+
+					const res=await floorLayer.queryFeatures({
+						where: `UPPER(Name) LIKE UPPER('${term}%')`,
+						outFields: ["OBJECTID","Name"],
+						returnGeometry: false,
+						orderByFields: ["Name ASC"],
+						num: 10
+					});
+
+					return res.features.map(f => ({
+						key: f.attributes.OBJECTID,
+						text: f.attributes.Name,
+						sourceIndex: params.sourceIndex
+					}));
+				},
+				getResults: async (params) =>
+				{
+					if(!floorLayer) return [];
+					const oid=params?.suggestResult?.key;
+					if(oid==null) return [];
+
+					const res=await floorLayer.queryFeatures({
+						where: `OBJECTID = ${oid}`,
+						outFields: ["*"],
+						returnGeometry: true
+					});
+
+					return res.features.map(f => ({
+						name: f.attributes.Name,
+						feature: f,
+						searchType: "condo"
 					}));
 				}
 			});
 
-			searchEl.sources=[condoSearchSource,regularSearchSource];
+			searchEl.sources=[
+				regularSearchSource,
+				addressSearchSource,
+				condoSearchSource
+			];
 
 			searchEl.addEventListener("arcgisSearchComplete",async (evt) =>
 			{
@@ -1642,10 +2106,9 @@
 				if(!result) return;
 
 				const feature=result.feature;
-				const isCondo=result.isCondo;
-				const name=result.Name;
+				const searchType=result.searchType;
 
-				if(isCondo)
+				if(searchType==="condo")
 				{
 					await switchTo3D();
 
@@ -1662,12 +2125,13 @@
 
 						if(buildingDiv)
 						{
-							//await handleBuildingSelection(buildingName,buildingDiv);
 							await selectBuildingFloorParcel(feature);
 						}
 					}
-					
-				} else
+					return;
+				}
+
+				if(searchType==="parcel")
 				{
 					await switchTo2D();
 
@@ -1683,10 +2147,54 @@
 
 					await mapView.goTo({ target: feature.geometry.extent.expand(2) });
 					await toggleParcelSelection(feature);
+					return;
+				}
+
+				if(searchType==="address")
+				{
+					const view=activeView;
+
+					view.graphics.removeAll();
+
+					const addressGraphic=new Graphic({
+						geometry: feature.geometry,
+						symbol: activeView===sceneView
+							? {
+								type: "point-3d",
+								symbolLayers: [{
+									type: "icon",
+									resource: { primitive: "circle" },
+									size: 10,
+									material: { color: [0,255,255,1] },
+									outline: { color: [255,255,255,1],size: 1 }
+								}]
+							}
+							:{
+								type: "simple-marker",
+								style: "circle",
+								size: 12,
+								color: [0,255,255,0.9],
+								outline: { color: [255,255,255,1],width: 2 }
+							}
+					});
+
+					view.graphics.add(addressGraphic);
+
+					await view.goTo({
+						target: feature.geometry,
+						zoom: activeView===mapView? 19:undefined,
+						scale: activeView===sceneView? 2500:undefined,
+						tilt: activeView===sceneView? 70:undefined
+					});
+
+					return;
 				}
 			});
 
-			launchBtn.onclick=() =>
+			launchSurveyButton2d?.addEventListener("click",launchSurvey);
+			launchBtn3d?.addEventListener("click",launchSurvey);
+
+			function launchSurvey()
 			{
 				if(selectedParcels.length===0)
 				{
@@ -1724,11 +2232,18 @@
 					"&encodeUrlParams=true"
 				].join("");
 
+
 				window.open(surveyUrl,"_blank");
-			};
+			}
+
+
 
 			// ---- Init
 			await refreshLayerRefs();
+
+			selectedParcelExpand2d?.addEventListener("arcgisPropertyChange",syncLrmLayerWithExpand);
+			selectedParcelExpand3d?.addEventListener("arcgisPropertyChange",syncLrmLayerWithExpand);
+			syncLrmLayerWithExpand();
 			await populateBuildingList();
 			await switchPage("parcel"); // ensure correct initial state
 			preloader.style.display="none";
