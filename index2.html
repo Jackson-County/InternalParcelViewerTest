@@ -7,12 +7,12 @@
 
 	<!-- Calcite + ArcGIS ESM -->
 	<script type="module" src="https://js.arcgis.com/5.0/"></script>
+	<script type="module" src="js/main.js"></script>
 
 	<style>
 		html, body {
 			height: 100%;
 			margin: 0;
-			background: #1a2b55;
 			font-family: "Segoe UI", sans-serif;
 			color: #ecf0f1;
 			overflow: hidden;
@@ -65,6 +65,7 @@
 			font-size: 12px;
 			border-top: 3px solid var(--accent-color);
 			z-index: 2;
+			display: flex;
 		}
 
 		#preloader {
@@ -112,9 +113,8 @@
 			border-right: 3px solid #122f57;
 			overflow: hidden;
 			z-index: 10;
-			min-height: 0;
+			
 		}
-
 		.panel {
 			background: #10294a;
 			padding: 10px;
@@ -141,7 +141,7 @@
 			color: white;
 		}
 
-		#buildingList {
+		#buildingList, #taxList {
 			max-height: 80vh;
 			overflow-y: auto;
 			overflow-x: clip;
@@ -211,12 +211,25 @@
 
 		/* view containers */
 		.page-view {
-			flex: 1 1 auto;
-			position: relative;
-			overflow: hidden;
-			min-width: 0;
+		flex: 1 1 auto;
+		position: relative;
+		min-width: 0;
+
+		display: flex;
+		flex-direction: column;
+		}
+		/* flexible map an table elements*/
+		/* map fills available space */
+		#saMap {
+		flex: 1 1 auto;
+		min-height: 0;
 		}
 
+		/* table stays at bottom */
+		.table-container {
+		flex: 0 0 250px;
+		border-top: 1px solid #ccc;
+		}
 		/* stack map + scene on top of each other */
 		.view-element {
 			position: absolute;
@@ -388,7 +401,7 @@
 			user-select: none;
 		}
 		/* Apply to all 3 lists */
-		#buildingList, #floorList, #parcelList {
+		#buildingList, #floorList, #parcelList, #taxList {
 			scrollbar-gutter: stable;
 			overscroll-behavior: contain;
 			scroll-behavior: smooth;
@@ -425,7 +438,7 @@
 		}
 
 		/* Firefox */
-		#buildingList, #floorList, #parcelList {
+		#buildingList, #floorList, #parcelList, #taxList {
 			scrollbar-width: thin;
 			scrollbar-color: rgba(28,92,255,0.95) rgba(0,0,0,0.18);
 		}
@@ -703,7 +716,7 @@
 			</div>
 
 			<div id="parcelView" class="page-view">
-				<!-- Floating 2D/3D toggle (ONLY for Parcel Viewer) -->
+				Floating 2D/3D toggle (ONLY for Parcel Viewer)
 				<button id="viewToggleFab" class="view-toggle-fab" title="Switch 2D / 3D">
 					<calcite-icon id="viewToggleFabIcon" icon="globe" scale="m"></calcite-icon>
 					<div id="viewToggleFabText" class="view-toggle-fab-text">2D</div>
@@ -790,8 +803,59 @@
 
 		<!-- SPECIAL ASSESSMENT PAGE -->
 		<div id="page-sa" class="app-page">
-			<div class="page-view">
-				<arcgis-map id="saMap" class="view-element visible" item-id="bb924a2b9c0143e196d1fa485b09aaef"><arcgis-basemap-gallery slot="top-right"></arcgis-basemap-gallery></arcgis-map>
+			<div id="left-sidebar">
+				<div id="selectionPanel" class="panel">
+					<h3>Select Districts</h3>
+					<calcite-combobox
+						id="fieldBox"
+						placeholder="Select a field"
+						select-all-enabled
+						selection-display="single">
+
+						<calcite-combobox-item
+						value="select-all-cid"
+						heading="Select all CID"
+						data-target-group="cid-names">
+						</calcite-combobox-item>
+
+						<calcite-combobox-item
+						value="select-all-tdd"
+						heading="Select all TDD"
+						data-target-group="tdd-names">
+						</calcite-combobox-item>
+
+						<calcite-combobox-item
+						value="select-all-tifproj"
+						heading="Select all TIF Projects"
+						data-target-group="tifproj-names">
+						</calcite-combobox-item>
+
+						<calcite-combobox-item
+						value="select-all-tifplan"
+						heading="Select all TIF Plan Districts"
+						data-target-group="tifplan-names">
+						</calcite-combobox-item>
+
+						<calcite-combobox-item-group id="cid-names" label="CID"></calcite-combobox-item-group>
+						<calcite-combobox-item-group id="tdd-names" label="TDD"></calcite-combobox-item-group>
+						<calcite-combobox-item-group id="tifproj-names" label="TIF Projects"></calcite-combobox-item-group>
+						<calcite-combobox-item-group id="tifplan-names" label="TIF Plan District"></calcite-combobox-item-group>
+				</div>
+
+				<div id="taxPanel" class="panel">
+					<div id="taxList"></div>
+				</div>
+			</div>
+
+			<div id="taxView" class="page-view">
+				<arcgis-map id="saMap" class="visible" item-id="715b4ef93362498e97db7393dc2b7d17">
+					<arcgis-layer-list slot="top-right"></arcgis-layer-list>
+				</arcgis-map>
+				<arcgis-feature-table
+					id="parcelsTable"
+					reference-element="saMap"
+					class="table-container">
+				</arcgis-feature-table>
 			</div>
 		</div>
 	</div>
