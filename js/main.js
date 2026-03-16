@@ -50,8 +50,8 @@ import { attachQueryTableListener } from "./queryTable.js";
   await populateComboboxGroup({ map, layerTitle: "TIF Plan District", fieldName: "Name", groupId: "tifplan-names", valuePrefix: "TIF_PLAN" });
 
   const combobox = document.getElementById("fieldBox");
-  const selectionList = document.getElementById("selectionList");
+  const selectionList = document.getElementById("taxList");
   attachSelectAllLogic(combobox);
   attachSelectionListLogic(combobox, selectionList);
-  attachQueryTableListener(combobox, featureTable);
+  attachQueryTableListener(combobox, featureTable, parcelLayer, view);
 })();
