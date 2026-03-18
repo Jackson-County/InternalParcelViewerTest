@@ -690,10 +690,10 @@
 					<span style="color:#cad2e6">Parcel Viewer</span>
 				</button>
 
-				<button id="publicWorksTab" class="header-tab" role="tab" aria-selected="false">
+				<!-- <button id="publicWorksTab" class="header-tab" role="tab" aria-selected="false">
 					<calcite-icon icon="wrench" scale="m"></calcite-icon>
 					<span>Public Works</span>
-				</button>
+				</button> -->
 
 				<button id="specialAssessTab" class="header-tab" role="tab" aria-selected="false">
 					<calcite-icon style="color:#c9f6cf" icon="graph-line-series" scale="m"></calcite-icon>
@@ -808,11 +808,12 @@
 		</div>
 		</div>
 
-		<!-- PUBLIC WORKS PAGE-->
+		<!-- PUBLIC WORKS PAGE
 		<div id="page-pw" class="app-page">
 			<div class="page-view">
+				<arcgis-map id="pwMap" class="view-element visible" item-id="af689ed76f0842b5a7383bff11a6892c"> <arcgis-basemap-gallery slot="top-right"></arcgis-basemap-gallery></arcgis-map>
 			</div>
-		</div>
+		</div> -->
 
 		<!-- SPECIAL ASSESSMENT PAGE -->
 		<div id="page-sa" class="app-page">
@@ -943,7 +944,7 @@
 
 			// ---- Page + header refs
 			const parcelViewerTabBtn=document.getElementById("parcelViewerTab");
-			const publicWorksTabBtn=document.getElementById("publicWorksTab");
+			// const publicWorksTabBtn=document.getElementById("publicWorksTab");
 			const specialAssessTabBtn=document.getElementById("specialAssessTab");
 
 			// selected parcel expands
@@ -963,7 +964,7 @@
 			const launchBtn3d=document.getElementById("launchSurveyButton3d");
 
 			const pageParcel=document.getElementById("page-parcel");
-			const pagePW=document.getElementById("page-pw");
+			// const pagePW=document.getElementById("page-pw");
 			const pageSA=document.getElementById("page-sa");
 
 			const searchEl=document.getElementById("search");
@@ -1011,7 +1012,7 @@
 			updateFabIcon();
 
 			// ---- Tab active styling
-			const tabButtons=[parcelViewerTabBtn,publicWorksTabBtn,specialAssessTabBtn].filter(Boolean);
+			const tabButtons=[parcelViewerTabBtn,specialAssessTabBtn].filter(Boolean);
 			function setActivePageTab(btn)
 			{
 				tabButtons.forEach(b =>
@@ -1023,7 +1024,7 @@
 			}
 
 			// ---- Lazy-load PW/SA maps (hidden containers start at 0x0)
-			let pwLoaded=false;
+			// let pwLoaded=false;
 			let saLoaded=false;
 			function openSelectedParcelPanel()
 			{
@@ -1095,14 +1096,14 @@
 				const el=document.getElementById(mapId);
 				if(!el) return;
 
-				if(flagName==="pw"&&pwLoaded) return;
+				// if(flagName==="pw"&&pwLoaded) return;
 				if(flagName==="sa"&&saLoaded) return;
 
 				await el.viewOnReady();
 				// resize after it becomes visible
 				el.view?.resize?.();
 
-				if(flagName==="pw") pwLoaded=true;
+				// if(flagName==="pw") pwLoaded=true;
 				if(flagName==="sa") saLoaded=true;
 			}
 
@@ -1113,7 +1114,7 @@
 				currentPage=pageName;
 
 				pageParcel.classList.toggle("visible",pageName==="parcel");
-				pagePW.classList.toggle("visible",pageName==="pw");
+				// pagePW.classList.toggle("visible",pageName==="pw");
 				pageSA.classList.toggle("visible",pageName==="sa");
 
 				// Search only on Parcel Viewer
@@ -1121,11 +1122,11 @@
 
 				// Tab highlight
 				if(pageName==="parcel") setActivePageTab(parcelViewerTabBtn);
-				if(pageName==="pw") setActivePageTab(publicWorksTabBtn);
+				// if(pageName==="pw") setActivePageTab(publicWorksTabBtn);
 				if(pageName==="sa") setActivePageTab(specialAssessTabBtn);
 
 				// Lazy load external maps
-				if(pageName==="pw") await ensureMapLoaded("pwMap","pw");
+				// if(pageName==="pw") await ensureMapLoaded("pwMap","pw");
 				if(pageName==="sa") await ensureMapLoaded("saMap","sa");
 
 				// When returning to parcel page, force resize so views render correctly
@@ -1137,7 +1138,7 @@
 			}
 
 			parcelViewerTabBtn.addEventListener("click",async () => switchPage("parcel"));
-			publicWorksTabBtn.addEventListener("click",async () => switchPage("pw"));
+			// publicWorksTabBtn.addEventListener("click",async () => switchPage("pw"));
 			specialAssessTabBtn.addEventListener("click",async () => switchPage("sa"));
 
 			// ---- 2D/3D toggle (FAB) ONLY for Parcel page
